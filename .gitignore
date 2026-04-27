@@ -2,3 +2,14 @@
 Requirements.md
 requirements.md
 Requeiments.md
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+.venv*/
+venv/
