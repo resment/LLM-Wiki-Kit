@@ -8,9 +8,10 @@ It is not a normal note template and it is not a RAG system. The project separat
 
 ## Status
 
-v0.1 Phase 2 provides deterministic scaffolding, initialization, manifest scanning,
-source-card templates, prompt rendering, linting, current export, and mini-kb
-draft generation. It does not call an LLM API by default.
+v0.1 Phase 3 provides deterministic scaffolding, initialization, manifest scanning,
+source-card templates, prompt rendering, linting, current export, mini-kb draft generation,
+richer docs, richer templates, and an anonymized example knowledge base. It does not call an
+LLM API by default.
 
 ## Quick Start
 
@@ -36,7 +37,7 @@ archive/               Archived material.
 
 ## CLI
 
-Phase 2 supports:
+Phase 3 supports:
 
 ```bash
 llm-wiki init ./SimonKnowledgeBase
@@ -65,11 +66,11 @@ Hermes integration is optional and lives under `hermes/`. Codex maintenance rule
 
 ## Examples
 
-Example projects are scaffolded under `examples/`. They are anonymized and intentionally lightweight in Phase 2.
+Example projects are scaffolded under `examples/`. The `product-knowledge-ops` example includes raw
+sources, source cards, portfolio pages, current/current_draft separation, and a review-prep mini-kb.
 
 ## Roadmap
 
-- Phase 3: richer templates, docs, and example outputs.
 - Phase 4: optional Hermes adapter.
 - Phase 5: polish, validation, and packaging hardening.
 

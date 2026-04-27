@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-v0.1 Phase 2 提供确定性的项目脚手架、初始化命令和核心本地工具。默认不调用任何 LLM API。
+v0.1 Phase 3 提供确定性的项目脚手架、初始化命令、核心本地工具、完善的文档和模板，以及匿名示例知识库。默认不调用任何 LLM API。
 
 ## 快速开始
 
@@ -28,7 +28,7 @@ archive/               归档资料。
 
 ## CLI
 
-Phase 2 支持：
+Phase 3 支持：
 
 ```bash
 llm-wiki init ./SimonKnowledgeBase
@@ -53,8 +53,18 @@ llm-wiki mini-kb create ./SimonKnowledgeBase --topic "Example" --purpose "Review
 - 用户应在提交前 review diff。
 - 测试不得调用外部 LLM API。
 
+## 示例项目
+
+`examples/product-knowledge-ops/` 展示了一个匿名产品知识运营项目组合，包括：
+
+- 多个 raw source；
+- source card；
+- source manifest；
+- 项目页和 capability 页；
+- `current/` 与 `current_draft/` 分离；
+- 面向评审准备的 mini-kb。
+
 ## 后续路线
 
-- Phase 3：完善模板、文档和匿名示例。
 - Phase 4：可选 Hermes adapter。
 - Phase 5：打磨、校验和发布准备。
