@@ -8,10 +8,10 @@ It is not a normal note template and it is not a RAG system. The project separat
 
 ## Status
 
-v0.1 Phase 3 provides deterministic scaffolding, initialization, manifest scanning,
+v0.1 Phase 4 provides deterministic scaffolding, initialization, manifest scanning,
 source-card templates, prompt rendering, linting, current export, mini-kb draft generation,
-richer docs, richer templates, and an anonymized example knowledge base. It does not call an
-LLM API by default.
+richer docs, richer templates, an anonymized example knowledge base, and optional Hermes skills.
+It does not call an LLM API by default.
 
 ## Quick Start
 
@@ -37,7 +37,7 @@ archive/               Archived material.
 
 ## CLI
 
-Phase 3 supports:
+Phase 4 supports:
 
 ```bash
 llm-wiki init ./SimonKnowledgeBase
@@ -48,9 +48,11 @@ llm-wiki prompt lint-ai ./SimonKnowledgeBase
 llm-wiki lint ./SimonKnowledgeBase
 llm-wiki export current ./SimonKnowledgeBase
 llm-wiki mini-kb create ./SimonKnowledgeBase --topic "Example" --purpose "Review prep"
+llm-wiki hermes install-skills --dry-run
 ```
 
-Optional Hermes skill installation is planned for a later phase.
+Hermes integration is optional. Installed skills are prompt/procedure adapters and do not change
+the deterministic CLI safety model.
 
 ## Safety Boundaries
 
@@ -71,7 +73,6 @@ sources, source cards, portfolio pages, current/current_draft separation, and a 
 
 ## Roadmap
 
-- Phase 4: optional Hermes adapter.
 - Phase 5: polish, validation, and packaging hardening.
 
 ## License

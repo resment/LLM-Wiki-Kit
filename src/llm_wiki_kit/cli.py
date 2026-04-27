@@ -11,6 +11,7 @@ from rich.table import Table
 
 from llm_wiki_kit import __version__
 from llm_wiki_kit.export import export_current
+from llm_wiki_kit.hermes import install_skills
 from llm_wiki_kit.init_kb import InitError, init_knowledge_base
 from llm_wiki_kit.linting import lint_exit_code, lint_json, lint_knowledge_base
 from llm_wiki_kit.manifest import scan_manifest
@@ -28,6 +29,7 @@ source_card_app = typer.Typer(help="Create source card templates.")
 prompt_app = typer.Typer(help="Render prompts for external agents.")
 export_app = typer.Typer(help="Export confirmed knowledge for AI tools.")
 mini_kb_app = typer.Typer(help="Create mini knowledge-base drafts.")
+hermes_app = typer.Typer(help="Install optional Hermes adapter skills.")
 console = Console()
 
 app.add_typer(manifest_app, name="manifest")
@@ -35,6 +37,7 @@ app.add_typer(source_card_app, name="source-card")
 app.add_typer(prompt_app, name="prompt")
 app.add_typer(export_app, name="export")
 app.add_typer(mini_kb_app, name="mini-kb")
+app.add_typer(hermes_app, name="hermes")
 
 
 def _version_callback(value: bool) -> None:
@@ -229,3 +232,32 @@ def mini_kb_create(
         raise typer.Exit(code=1) from error
     action = "Would create" if dry_run else "Created"
     console.print(f"[green]{action}[/green] {result.path}")
+
+
+@hermes_app.command("install-skills")
+def hermes_install_skills(
+    target: Annotated[
+        Path | None,
+        typer.Option("--target", help="Target skill directory."),
+    ] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without copying.")] = False,
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Overwrite existing skill directories."),
+    ] = False,
+) -> None:
+    """Install bundled Hermes skills."""
+
+    result = install_skills(target=target, dry_run=dry_run, force=force)
+    action = "Would install" if dry_run else "Installed"
+    console.print(f"[green]{action}[/green] Hermes skills to {result.target}")
+
+    table = Table(title="Hermes Skills")
+    table.add_column("Action")
+    table.add_column("Skill")
+    table.add_column("Path")
+    for path in result.copied:
+        table.add_row("copy", path.name, str(path))
+    for path in result.skipped:
+        table.add_row("skip", path.name, str(path))
+    console.print(table)
