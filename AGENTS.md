@@ -20,7 +20,7 @@ This repository implements llm-wiki-kit, a framework for building LLM-compiled M
 - Prefer small, composable modules.
 - Keep Hermes integration optional.
 - Keep examples anonymized.
+- Keep `README.md` and `README_CN.md` updated together in every iteration.
 - Keep templates and implementation separate.
 - Do not hard-code business examples into core modules.
 - Do not claim implemented automation in README before it exists.
-
