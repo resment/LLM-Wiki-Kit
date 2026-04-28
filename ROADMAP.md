@@ -10,6 +10,11 @@ Implemented:
 - Phase 4: optional Hermes adapter skills and installer.
 - Phase 5: release polish, packaging metadata, and example validation.
 
+## Licensing
+
+llm-wiki-kit is source-available under PolyForm Noncommercial License 1.0.0 for noncommercial use.
+Commercial use requires a separate written commercial license.
+
 ## Next Candidates
 
 - Improve source manifest parsing for existing hand-edited tables.

@@ -1,6 +1,7 @@
 # llm-wiki-kit
 
-`llm-wiki-kit` is a framework for building LLM-compiled Markdown knowledge bases.
+`llm-wiki-kit` is a source-available framework for building LLM-compiled Markdown
+knowledge bases.
 
 Chinese README: [README_CN.md](README_CN.md)
 
@@ -63,6 +64,14 @@ the deterministic CLI safety model.
 - Users should review diffs before committing generated changes.
 - Tests must not call external LLM APIs.
 
+## Licensing
+
+llm-wiki-kit is source-available under the PolyForm Noncommercial License 1.0.0.
+Noncommercial use is permitted under `LICENSE`. Commercial use requires a separate
+paid commercial license; see [COMMERCIAL.md](COMMERCIAL.md).
+
+This project is not OSI open source because commercial use is reserved.
+
 ## Hermes and Codex
 
 Hermes integration is optional and lives under `hermes/`. Codex maintenance rules live in `AGENTS.md` and generated knowledge bases receive their own `AGENTS.md` and `ai_kb/schema/AGENTS.md`.
@@ -78,4 +87,5 @@ See [ROADMAP.md](ROADMAP.md).
 
 ## License
 
-MIT
+PolyForm Noncommercial License 1.0.0 for noncommercial use. Commercial use requires a separate
+written agreement.

@@ -1,6 +1,6 @@
 # llm-wiki-kit
 
-`llm-wiki-kit` 是一个用于构建 “LLM 编译型 Markdown 知识库” 的框架。
+`llm-wiki-kit` 是一个 source-available 的 “LLM 编译型 Markdown 知识库” 框架。
 
 它不是普通笔记模板，也不是 RAG 系统。项目把不可变原始资料、AI 编译后的 wiki、人工确认的当前状态，以及面向 AI 工具的导出层分开管理。
 
@@ -54,6 +54,13 @@ python scripts/validate_example.py
 - `export_for_ai/` 是消费层，不是事实源。
 - 用户应在提交前 review diff。
 - 测试不得调用外部 LLM API。
+
+## 许可
+
+llm-wiki-kit 默认采用 PolyForm Noncommercial License 1.0.0。非商业使用可按 `LICENSE`
+执行；商业使用必须获得单独的付费商业授权，见 [COMMERCIAL.md](COMMERCIAL.md)。
+
+由于保留商业使用授权权利，本项目不是 OSI 定义下的开源项目，而是 source-available 项目。
 
 ## 示例项目
 

@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Deterministic scaffolding and CLI helpers for LLM-compiled Markdown knowledge bases."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { text = "PolyForm-Noncommercial-1.0.0" }
 authors = [
   { name = "llm-wiki-kit contributors" }
 ]
@@ -17,7 +17,6 @@ classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
   "Topic :: Documentation",
@@ -46,6 +45,7 @@ Issues = "https://github.com/resment/LLM-Wiki-Kit/issues"
 
 [tool.setuptools]
 include-package-data = true
+license-files = ["LICENSE", "COMMERCIAL.md", "CONTRIBUTING.md"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
