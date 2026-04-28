@@ -1,8 +1,14 @@
 # Quickstart
 
 ```bash
-pip install -e ".[dev]"
+pip install "llm-wiki-kit @ git+https://github.com/resment/LLM-Wiki-Kit.git"
 llm-wiki init ./SimonKnowledgeBase
+```
+
+For local development after cloning the repository, use:
+
+```bash
+pip install -e ".[dev]"
 ```
 
 Create a raw source:

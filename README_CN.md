@@ -11,9 +11,11 @@ v0.2.3 提供确定性的项目脚手架、初始化命令、manifest 扫描、s
 ## 快速开始
 
 ```bash
-pip install -e ".[dev]"
+pip install "llm-wiki-kit @ git+https://github.com/resment/LLM-Wiki-Kit.git"
 llm-wiki init ./SimonKnowledgeBase
 ```
+
+如果是 clone 仓库后的本地开发环境，再使用 `pip install -e ".[dev]"`。
 
 ## 核心目录
 

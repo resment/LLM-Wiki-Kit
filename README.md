@@ -17,9 +17,11 @@ stronger consistency checks. It does not call an LLM API by default.
 ## Quick Start
 
 ```bash
-pip install -e ".[dev]"
+pip install "llm-wiki-kit @ git+https://github.com/resment/LLM-Wiki-Kit.git"
 llm-wiki init ./SimonKnowledgeBase
 ```
+
+For local development after cloning the repository, use `pip install -e ".[dev]"`.
 
 ## Core Layout
 
