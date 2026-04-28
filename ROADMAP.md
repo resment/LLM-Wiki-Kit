@@ -1,5 +1,12 @@
 # Roadmap
 
+## v0.2.3 Status
+
+Implemented:
+
+- `llm-wiki hermes bootstrap-prompt <kb_root>` for natural-language Hermes Agent installation.
+- First-use prompt text covering skill install, profile binding, lint verification, and safety rules.
+
 ## v0.2.2 Status
 
 Implemented:

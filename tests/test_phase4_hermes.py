@@ -3,7 +3,11 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from llm_wiki_kit.cli import app
-from llm_wiki_kit.hermes import configure_knowledge_base_profile, install_skills
+from llm_wiki_kit.hermes import (
+    configure_knowledge_base_profile,
+    install_skills,
+    render_bootstrap_prompt,
+)
 from llm_wiki_kit.init_kb import init_knowledge_base
 
 runner = CliRunner()
@@ -118,6 +122,32 @@ def test_hermes_configure_kb_requires_force_for_existing_profile(tmp_path: Path)
     )
     assert force_result.exit_code == 0, force_result.output
     assert "Wrote" in force_result.output
+
+
+def test_hermes_bootstrap_prompt_includes_install_configure_and_safety(tmp_path: Path) -> None:
+    kb_root = tmp_path / "kb"
+    init_knowledge_base(kb_root)
+
+    prompt = render_bootstrap_prompt(kb_root, target=tmp_path / "skills", profile="Work KB")
+
+    assert "llm-wiki hermes install-skills" in prompt
+    assert "llm-wiki hermes configure-kb" in prompt
+    assert "llm-wiki lint" in prompt
+    assert str(kb_root.resolve()) in prompt
+    assert "work-kb" in prompt
+    assert "ai_kb/raw/" in prompt
+
+
+def test_cli_hermes_bootstrap_prompt(tmp_path: Path) -> None:
+    kb_root = tmp_path / "kb"
+    init_knowledge_base(kb_root)
+
+    result = runner.invoke(app, ["hermes", "bootstrap-prompt", str(kb_root)])
+
+    assert result.exit_code == 0, result.output
+    assert "请帮我安装并配置" in result.output
+    assert "llm-wiki hermes install-skills" in result.output
+    assert str(kb_root.resolve()) in result.output
 
 
 def test_hermes_skill_docs_have_required_sections() -> None:

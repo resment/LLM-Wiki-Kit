@@ -11,7 +11,11 @@ from rich.table import Table
 
 from llm_wiki_kit import __version__
 from llm_wiki_kit.export import export_current
-from llm_wiki_kit.hermes import configure_knowledge_base_profile, install_skills
+from llm_wiki_kit.hermes import (
+    configure_knowledge_base_profile,
+    install_skills,
+    render_bootstrap_prompt,
+)
 from llm_wiki_kit.indexes import build_indexes
 from llm_wiki_kit.init_kb import InitError, init_knowledge_base
 from llm_wiki_kit.linting import lint_exit_code, lint_json, lint_knowledge_base
@@ -322,6 +326,20 @@ def hermes_configure_kb(
     console.print(f"[green]{action}[/green] Hermes profile {result.path}")
     if dry_run:
         console.print(result.content)
+
+
+@hermes_app.command("bootstrap-prompt")
+def hermes_bootstrap_prompt(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    target: Annotated[
+        Path | None,
+        typer.Option("--target", help="Hermes llm-wiki-kit skill directory."),
+    ] = None,
+    profile: Annotated[str, typer.Option("--profile", help="Profile name.")] = "default",
+) -> None:
+    """Print a natural-language Hermes Agent install prompt."""
+
+    console.out(render_bootstrap_prompt(kb_root, target=target, profile=profile))
 
 
 @tags_app.command("list")

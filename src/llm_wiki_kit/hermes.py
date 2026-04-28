@@ -113,6 +113,63 @@ llm-wiki index build {root}
 """
 
 
+def render_bootstrap_prompt(
+    kb_root: Path,
+    *,
+    target: Path | None = None,
+    profile: str = DEFAULT_HERMES_PROFILE,
+) -> str:
+    """Render a natural-language prompt for Hermes Agent first-use installation."""
+
+    root = kb_root.expanduser().resolve()
+    target_root = (target or DEFAULT_HERMES_SKILL_TARGET).expanduser().resolve()
+    normalized_profile = _normalize_profile_name(profile)
+    return f"""请帮我安装并配置 llm-wiki-kit 的 Hermes 接入。
+
+目标知识库路径：
+
+```text
+{root}
+```
+
+Hermes skills 目标目录：
+
+```text
+{target_root}
+```
+
+Profile 名称：
+
+```text
+{normalized_profile}
+```
+
+请按顺序执行：
+
+```bash
+llm-wiki hermes install-skills --target "{target_root}"
+llm-wiki hermes configure-kb "{root}" --target "{target_root}" --profile "{normalized_profile}"
+llm-wiki lint "{root}"
+```
+
+如果 profile 已存在，请先停下来告诉我，不要自动覆盖；只有我明确确认后才使用 `--force`。
+
+安装完成后，请告诉我：
+
+- 已安装或跳过的 skills；
+- profile 文件路径；
+- `llm-wiki lint` 的结果；
+- 后续我可以如何要求你维护这个知识库。
+
+安全边界：
+
+- 不要修改 `ai_kb/raw/`。
+- 默认只写 `ai_kb/wiki/current_draft/`，不要直接写 `ai_kb/wiki/current/`。
+- `ai_kb/wiki/indexes/` 和 `ai_kb/export_for_ai/` 是派生输出。
+- 重要结论必须引用 source path。
+"""
+
+
 def hermes_skills_root() -> Path:
     """Return bundled Hermes skills from source checkout or installed package data."""
 

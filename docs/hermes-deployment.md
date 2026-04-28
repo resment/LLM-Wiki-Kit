@@ -47,8 +47,12 @@ llm-wiki hermes install-skills
 Bind the default knowledge base for first-use Hermes workflows:
 
 ```bash
+llm-wiki hermes bootstrap-prompt /path/to/YourKnowledgeBase
 llm-wiki hermes configure-kb /path/to/YourKnowledgeBase
 ```
+
+`bootstrap-prompt` prints a natural-language request that can be pasted into Hermes Agent. The
+agent can then run the deterministic install and profile commands for the user.
 
 Default target:
 
@@ -75,6 +79,17 @@ Existing skill directories are skipped unless `--force` is provided.
 Use `--profile <name>` for multiple knowledge bases and `--target <dir>` when skills are installed
 outside the default Hermes directory. Existing profiles are not overwritten unless `--force` is
 provided.
+
+## Natural-Language Agent Install
+
+Generate the prompt:
+
+```bash
+llm-wiki hermes bootstrap-prompt /path/to/YourKnowledgeBase
+```
+
+Paste the output into Hermes Agent. The prompt instructs Hermes to install skills, configure the
+default profile, run lint, and report what changed.
 
 ## Shell Install
 

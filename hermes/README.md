@@ -48,8 +48,12 @@ Existing skill directories are skipped unless `--force` is provided.
 After installing skills, bind the default knowledge base:
 
 ```bash
+llm-wiki hermes bootstrap-prompt /path/to/YourKnowledgeBase
 llm-wiki hermes configure-kb /path/to/YourKnowledgeBase
 ```
+
+`bootstrap-prompt` prints a natural-language installation request that can be pasted into Hermes
+Agent.
 
 This writes:
 

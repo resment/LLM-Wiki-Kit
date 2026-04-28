@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-v0.2.2 提供确定性的项目脚手架、初始化命令、manifest 扫描、source card 模板、prompt 渲染、lint、current 导出、mini-kb 草稿、可选 Hermes skills、Obsidian 友好的 Markdown tags、机器可读索引和更强的一致性检查。默认不调用任何 LLM API。
+v0.2.3 提供确定性的项目脚手架、初始化命令、manifest 扫描、source card 模板、prompt 渲染、lint、current 导出、mini-kb 草稿、可选 Hermes skills、Obsidian 友好的 Markdown tags、机器可读索引和更强的一致性检查。默认不调用任何 LLM API。
 
 ## 快速开始
 
@@ -29,7 +29,7 @@ archive/               归档资料。
 
 ## CLI
 
-v0.2.2 支持：
+v0.2.3 支持：
 
 ```bash
 llm-wiki init ./SimonKnowledgeBase
@@ -47,6 +47,7 @@ llm-wiki lint ./SimonKnowledgeBase
 llm-wiki export current ./SimonKnowledgeBase
 llm-wiki mini-kb create ./SimonKnowledgeBase --topic "Example" --purpose "Review prep"
 llm-wiki hermes install-skills --dry-run
+llm-wiki hermes bootstrap-prompt ./SimonKnowledgeBase
 llm-wiki hermes configure-kb ./SimonKnowledgeBase
 python scripts/validate_example.py
 ```
@@ -98,15 +99,16 @@ llm-wiki-kit 默认采用 PolyForm Noncommercial License 1.0.0。非商业使用
 
 ## Hermes adapter
 
-Hermes 集成是可选能力，位于 `hermes/`。安装命令默认复制 skills 到 `~/.hermes/skills/llm-wiki-kit/`，已存在的 skill 默认跳过，除非传入 `--force`。v0.2.1 已包含 Hermes tags/index skills，用于接入现有的 `llm-wiki tags` 和 `llm-wiki index build` 工作流。v0.2.2 增加 `configure-kb`，让 Hermes 通过本地 profile 记住默认知识库路径。
+Hermes 集成是可选能力，位于 `hermes/`。安装命令默认复制 skills 到 `~/.hermes/skills/llm-wiki-kit/`，已存在的 skill 默认跳过，除非传入 `--force`。v0.2.1 已包含 Hermes tags/index skills，用于接入现有的 `llm-wiki tags` 和 `llm-wiki index build` 工作流。v0.2.2 增加 `configure-kb`，让 Hermes 通过本地 profile 记住默认知识库路径。v0.2.3 增加 `bootstrap-prompt`，可生成直接粘贴给 Hermes Agent 的自然语言安装请求。
 
 安装 Hermes skills 后，绑定默认知识库：
 
 ```bash
+llm-wiki hermes bootstrap-prompt ./SimonKnowledgeBase
 llm-wiki hermes configure-kb ./SimonKnowledgeBase
 ```
 
-该命令会写入 `~/.hermes/skills/llm-wiki-kit/profiles/`。
+`bootstrap-prompt` 会输出给 Hermes Agent 执行的自然语言步骤；`configure-kb` 会写入 `~/.hermes/skills/llm-wiki-kit/profiles/`。
 
 ## 后续路线
 
