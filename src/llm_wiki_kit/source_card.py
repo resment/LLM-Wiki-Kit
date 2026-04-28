@@ -8,6 +8,21 @@ from pathlib import Path
 from llm_wiki_kit.utils.dates import extract_date_from_name, utc_now_iso
 from llm_wiki_kit.utils.frontmatter import parse_frontmatter
 
+REQUIRED_SOURCE_CARD_FIELDS = (
+    "source_path",
+    "source_date",
+    "source_type",
+    "direct_projects",
+    "indirect_projects",
+    "domains",
+    "capabilities",
+    "concepts",
+    "ingest_status",
+    "current_impact",
+    "created_at",
+    "updated_at",
+)
+
 
 @dataclass(frozen=True)
 class SourceCardResult:

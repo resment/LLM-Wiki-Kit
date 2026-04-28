@@ -1,5 +1,15 @@
 # Roadmap
 
+## v0.2 Status
+
+Implemented:
+
+- Obsidian-friendly managed Markdown tag blocks with `llm-wiki tags list/add/set`.
+- External tag suggestion prompt via `llm-wiki prompt tag`.
+- Manifest scan preserves manually maintained fields by default.
+- Machine-readable indexes under `ai_kb/wiki/indexes/`.
+- Stronger lint checks for Markdown links, source cards, current citations, and managed tags.
+
 ## v0.1 Status
 
 Implemented:
@@ -17,11 +27,10 @@ Commercial use requires a separate written commercial license.
 
 ## Next Candidates
 
-- Improve source manifest parsing for existing hand-edited tables.
-- Add optional machine-readable project/capability indexes.
-- Add stronger Markdown link validation.
-- Add docs for publishing releases.
+- Add release publishing docs and automation.
 - Add more example knowledge-base shapes outside product knowledge operations.
+- Add optional richer Obsidian graph conventions without requiring an Obsidian plugin.
+- Add source-card/current consistency reports beyond lint output.
 
 ## Non-Goals for v0.1
 

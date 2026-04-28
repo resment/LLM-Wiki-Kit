@@ -8,8 +8,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from llm_wiki_kit.manifest import manifest_source_paths
-from llm_wiki_kit.source_card import source_card_path
-from llm_wiki_kit.utils.frontmatter import has_frontmatter
+from llm_wiki_kit.source_card import REQUIRED_SOURCE_CARD_FIELDS, source_card_path
+from llm_wiki_kit.tags import validate_managed_tag_block
+from llm_wiki_kit.utils.frontmatter import has_frontmatter, parse_frontmatter
+from llm_wiki_kit.utils.links import extract_markdown_links, resolve_link
 
 
 @dataclass(frozen=True)
@@ -90,9 +92,10 @@ def lint_knowledge_base(kb_root: Path, *, max_current_age: int = 30) -> list[Lin
 
     for wiki_page in sorted((root / "ai_kb/wiki").rglob("*.md")):
         relative = wiki_page.relative_to(root).as_posix()
+        text = wiki_page.read_text(encoding="utf-8")
         if "ai_kb/wiki/source_cards/" in relative:
-            continue
-        if not has_frontmatter(wiki_page.read_text(encoding="utf-8")):
+            _extend_source_card_issues(root, wiki_page, issues)
+        if not has_frontmatter(text):
             issues.append(
                 LintIssue(
                     "info",
@@ -104,6 +107,22 @@ def lint_knowledge_base(kb_root: Path, *, max_current_age: int = 30) -> list[Lin
         if "raw" in wiki_page.parts:
             issues.append(
                 LintIssue("error", "raw-under-wiki", relative, "Raw material is under wiki.")
+            )
+        _extend_link_issues(root, wiki_page, issues)
+        _extend_tag_issues(root, wiki_page, issues)
+
+    current_pages = sorted(current_root.rglob("*.md")) if current_root.exists() else []
+    draft_pages = sorted(draft_root.rglob("*.md")) if draft_root.exists() else []
+    for current_page in [*current_pages, *draft_pages]:
+        text = current_page.read_text(encoding="utf-8")
+        if "ai_kb/raw/" not in text:
+            issues.append(
+                LintIssue(
+                    "warning",
+                    "missing-source-citation",
+                    current_page.relative_to(root).as_posix(),
+                    "Current page does not cite an ai_kb/raw/ source path.",
+                )
             )
 
     for directory in sorted(root.rglob("*")):
@@ -135,3 +154,60 @@ def _is_empty_dir(path: Path) -> bool:
 def _age_days(path: Path) -> int:
     modified = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
     return (datetime.now(UTC) - modified).days
+
+
+def _extend_source_card_issues(root: Path, source_card: Path, issues: list[LintIssue]) -> None:
+    relative = source_card.relative_to(root).as_posix()
+    metadata, _body = parse_frontmatter(source_card.read_text(encoding="utf-8"))
+    for field in REQUIRED_SOURCE_CARD_FIELDS:
+        if field not in metadata or metadata[field] in ("", None):
+            issues.append(
+                LintIssue("error", "source-card-missing-field", relative, f"Missing {field}.")
+            )
+    source_path = metadata.get("source_path")
+    if isinstance(source_path, str):
+        target = root / source_path
+        if not source_path.startswith("ai_kb/raw/"):
+            issues.append(
+                LintIssue(
+                    "error",
+                    "source-card-source-outside-raw",
+                    relative,
+                    "source_path must point under ai_kb/raw/.",
+                )
+            )
+        elif not target.exists():
+            issues.append(
+                LintIssue(
+                    "error",
+                    "source-card-source-missing",
+                    relative,
+                    f"source_path does not exist: {source_path}",
+                )
+            )
+
+
+def _extend_link_issues(root: Path, page: Path, issues: list[LintIssue]) -> None:
+    for link in extract_markdown_links(page):
+        target = resolve_link(page, link.target, root)
+        if not target.exists():
+            issues.append(
+                LintIssue(
+                    "warning",
+                    "broken-markdown-link",
+                    page.relative_to(root).as_posix(),
+                    f"Broken link target: {link.target}",
+                )
+            )
+
+
+def _extend_tag_issues(root: Path, page: Path, issues: list[LintIssue]) -> None:
+    for message in validate_managed_tag_block(page.read_text(encoding="utf-8")):
+        issues.append(
+            LintIssue(
+                "warning",
+                "invalid-managed-tag",
+                page.relative_to(root).as_posix(),
+                message,
+            )
+        )

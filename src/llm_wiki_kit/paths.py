@@ -25,6 +25,7 @@ KB_DIRECTORIES: tuple[str, ...] = (
     "ai_kb/wiki/analysis",
     "ai_kb/wiki/current",
     "ai_kb/wiki/current_draft",
+    "ai_kb/wiki/indexes",
     "ai_kb/schema",
     "ai_kb/export_for_ai/current",
     "ai_kb/export_for_ai/mini_kb",

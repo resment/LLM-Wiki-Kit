@@ -12,12 +12,14 @@ from rich.table import Table
 from llm_wiki_kit import __version__
 from llm_wiki_kit.export import export_current
 from llm_wiki_kit.hermes import install_skills
+from llm_wiki_kit.indexes import build_indexes
 from llm_wiki_kit.init_kb import InitError, init_knowledge_base
 from llm_wiki_kit.linting import lint_exit_code, lint_json, lint_knowledge_base
 from llm_wiki_kit.manifest import scan_manifest
 from llm_wiki_kit.mini_kb import create_mini_kb
-from llm_wiki_kit.prompts import render_ingest_prompt, render_lint_ai_prompt
+from llm_wiki_kit.prompts import render_ingest_prompt, render_lint_ai_prompt, render_tag_prompt
 from llm_wiki_kit.source_card import create_source_card
+from llm_wiki_kit.tags import add_tags_to_file, list_tags, set_tags_in_file
 
 app = typer.Typer(
     name="llm-wiki",
@@ -30,6 +32,8 @@ prompt_app = typer.Typer(help="Render prompts for external agents.")
 export_app = typer.Typer(help="Export confirmed knowledge for AI tools.")
 mini_kb_app = typer.Typer(help="Create mini knowledge-base drafts.")
 hermes_app = typer.Typer(help="Install optional Hermes adapter skills.")
+tags_app = typer.Typer(help="Manage Obsidian inline tags.")
+index_app = typer.Typer(help="Build machine-readable indexes.")
 console = Console()
 
 app.add_typer(manifest_app, name="manifest")
@@ -38,6 +42,8 @@ app.add_typer(prompt_app, name="prompt")
 app.add_typer(export_app, name="export")
 app.add_typer(mini_kb_app, name="mini-kb")
 app.add_typer(hermes_app, name="hermes")
+app.add_typer(tags_app, name="tags")
+app.add_typer(index_app, name="index")
 
 
 def _version_callback(value: bool) -> None:
@@ -104,13 +110,25 @@ def manifest_scan(
         str,
         typer.Option("--format", help="Output format: markdown or json."),
     ] = "markdown",
+    preserve_manual_fields: Annotated[
+        bool,
+        typer.Option(
+            "--preserve-manual-fields/--no-preserve-manual-fields",
+            help="Preserve manually maintained manifest fields when possible.",
+        ),
+    ] = True,
 ) -> None:
     """Scan ai_kb/raw and update source_manifest.md."""
 
     if output_format not in {"markdown", "json"}:
         console.print("[red]Error:[/red] --format must be markdown or json")
         raise typer.Exit(code=2)
-    content = scan_manifest(kb_root, output_format=output_format, dry_run=dry_run)
+    content = scan_manifest(
+        kb_root,
+        output_format=output_format,
+        dry_run=dry_run,
+        preserve_manual_fields=preserve_manual_fields,
+    )
     if dry_run or output_format == "json":
         console.print(content)
     else:
@@ -169,6 +187,16 @@ def prompt_lint_ai(
     """Render a semantic lint prompt for an external agent."""
 
     console.print(render_lint_ai_prompt(kb_root))
+
+
+@prompt_app.command("tag")
+def prompt_tag(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    markdown_path: Annotated[Path, typer.Argument(help="Markdown file to tag.")],
+) -> None:
+    """Render an Obsidian tag suggestion prompt for an external agent."""
+
+    console.print(render_tag_prompt(kb_root, markdown_path))
 
 
 @app.command("lint")
@@ -261,3 +289,73 @@ def hermes_install_skills(
     for path in result.skipped:
         table.add_row("skip", path.name, str(path))
     console.print(table)
+
+
+@tags_app.command("list")
+def tags_list(
+    markdown_path: Annotated[Path, typer.Argument(help="Markdown file to inspect.")],
+) -> None:
+    """List Obsidian inline tags in a Markdown file."""
+
+    for tag in list_tags(markdown_path):
+        console.print(tag)
+
+
+@tags_app.command("add")
+def tags_add(
+    markdown_path: Annotated[Path, typer.Argument(help="Markdown file to update.")],
+    tags: Annotated[list[str] | None, typer.Option("--tag", help="Tag to add.")] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing.")] = False,
+) -> None:
+    """Add tags to the managed Obsidian tag block."""
+
+    if not tags:
+        console.print("[red]Error:[/red] provide at least one --tag")
+        raise typer.Exit(code=2)
+    try:
+        result = add_tags_to_file(markdown_path, tags or [], dry_run=dry_run)
+    except ValueError as error:
+        console.print(f"[red]Error:[/red] {error}")
+        raise typer.Exit(code=1) from error
+    if dry_run:
+        console.print(result.content)
+    else:
+        console.print(f"[green]Updated[/green] {result.path}")
+        console.print(" ".join(result.tags))
+
+
+@tags_app.command("set")
+def tags_set(
+    markdown_path: Annotated[Path, typer.Argument(help="Markdown file to update.")],
+    tags: Annotated[list[str] | None, typer.Option("--tag", help="Tag to set.")] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing.")] = False,
+) -> None:
+    """Replace the managed Obsidian tag block."""
+
+    if not tags:
+        console.print("[red]Error:[/red] provide at least one --tag")
+        raise typer.Exit(code=2)
+    try:
+        result = set_tags_in_file(markdown_path, tags or [], dry_run=dry_run)
+    except ValueError as error:
+        console.print(f"[red]Error:[/red] {error}")
+        raise typer.Exit(code=1) from error
+    if dry_run:
+        console.print(result.content)
+    else:
+        console.print(f"[green]Updated[/green] {result.path}")
+        console.print(" ".join(result.tags))
+
+
+@index_app.command("build")
+def index_build(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing.")] = False,
+) -> None:
+    """Build machine-readable indexes under ai_kb/wiki/indexes."""
+
+    result = build_indexes(kb_root, dry_run=dry_run)
+    action = "Would build" if dry_run else "Built"
+    console.print(f"[green]{action}[/green] indexes")
+    for name, path in result.files.items():
+        console.print(f"{name}: {path}")

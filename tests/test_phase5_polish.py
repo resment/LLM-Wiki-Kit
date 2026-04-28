@@ -14,7 +14,7 @@ def test_project_metadata_is_release_ready() -> None:
     project = metadata["project"]
 
     assert project["name"] == "llm-wiki-kit"
-    assert project["version"] == "0.1.0"
+    assert project["version"] == "0.2.0"
     assert project["requires-python"] == ">=3.11"
     assert project["license"]["text"] == "PolyForm-Noncommercial-1.0.0"
     assert "llm-wiki" in project["scripts"]
@@ -26,6 +26,7 @@ def test_manifest_includes_public_assets() -> None:
     manifest = (REPO_ROOT / "MANIFEST.in").read_text(encoding="utf-8")
     metadata = loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     setuptools_config = metadata["tool"]["setuptools"]
+    data_files = metadata["tool"]["setuptools"]["data-files"]
 
     assert "README_CN.md" in manifest
     assert "COMMERCIAL.md" in manifest
@@ -35,6 +36,7 @@ def test_manifest_includes_public_assets() -> None:
     assert "recursive-include hermes *.md *.sh" in manifest
     assert "recursive-include examples *.md" in manifest
     assert "assets/hermes/skills/*/*.md" in setuptools_config["package-data"]["llm_wiki_kit"]
+    assert "templates/prompts/tag.md" in data_files["templates/prompts"]
     assert "COMMERCIAL.md" in setuptools_config["license-files"]
     assert "CONTRIBUTING.md" in setuptools_config["license-files"]
 
@@ -50,13 +52,16 @@ def test_license_files_reserve_commercial_rights() -> None:
     assert "separate commercial licenses" in contributing
 
 
-def test_readmes_and_roadmap_are_phase5_current() -> None:
+def test_readmes_and_roadmap_are_v02_current() -> None:
     readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
     readme_cn = (REPO_ROOT / "README_CN.md").read_text(encoding="utf-8")
     roadmap = (REPO_ROOT / "ROADMAP.md").read_text(encoding="utf-8")
 
-    assert "Phase 5" in readme
-    assert "Phase 5" in readme_cn
+    assert "v0.2" in readme
+    assert "v0.2" in readme_cn
+    assert "Obsidian" in readme
+    assert "Obsidian" in readme_cn
+    assert "v0.2 Status" in roadmap
     assert "Phase 5" in roadmap
     assert "No built-in LLM API calls" in roadmap
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from llm_wiki_kit.source_card import source_card_path
@@ -40,5 +41,28 @@ def render_lint_ai_prompt(kb_root: Path) -> str:
     return render_prompt(root, "lint", {"kb_root": root.as_posix()})
 
 
+def render_tag_prompt(kb_root: Path, markdown_path: Path) -> str:
+    root = kb_root.expanduser().resolve()
+    path = markdown_path if markdown_path.is_absolute() else root / markdown_path
+    relative_path = path.resolve().relative_to(root).as_posix()
+    return render_prompt(
+        root,
+        "tag",
+        {
+            "kb_root": root.as_posix(),
+            "markdown_path": relative_path,
+            "agents_path": "ai_kb/schema/AGENTS.md",
+        },
+    )
+
+
 def _template_root() -> Path:
-    return Path(__file__).resolve().parents[2] / "templates"
+    candidates = [
+        Path(__file__).resolve().parents[2] / "templates",
+        Path.cwd() / "templates",
+        Path(sys.prefix) / "templates",
+    ]
+    for candidate in candidates:
+        if (candidate / "prompts").is_dir():
+            return candidate
+    return candidates[0]

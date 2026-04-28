@@ -26,6 +26,8 @@ Run deterministic tools:
 llm-wiki manifest scan ./SimonKnowledgeBase
 llm-wiki source-card create ./SimonKnowledgeBase ai_kb/raw/meetings/2026-04-21_example.md
 llm-wiki prompt ingest ./SimonKnowledgeBase ai_kb/raw/meetings/2026-04-21_example.md
+llm-wiki tags add ./SimonKnowledgeBase/ai_kb/wiki/source_cards/meetings__2026-04-21_example.source-card.md --tag project/example
+llm-wiki index build ./SimonKnowledgeBase
 llm-wiki lint ./SimonKnowledgeBase
 ```
 

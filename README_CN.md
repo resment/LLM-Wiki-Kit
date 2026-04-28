@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-v0.1 Phase 5 提供确定性的项目脚手架、初始化命令、核心本地工具、完善的文档和模板、匿名示例知识库、可选 Hermes skills、发布元数据和示例校验。默认不调用任何 LLM API。
+v0.2 提供确定性的项目脚手架、初始化命令、manifest 扫描、source card 模板、prompt 渲染、lint、current 导出、mini-kb 草稿、可选 Hermes skills、Obsidian 友好的 Markdown tags、机器可读索引和更强的一致性检查。默认不调用任何 LLM API。
 
 ## 快速开始
 
@@ -21,6 +21,7 @@ llm-wiki init ./SimonKnowledgeBase
 human/                 用户本人写作区，AI 默认不编辑。
 ai_kb/raw/             不可变事实源。
 ai_kb/wiki/            AI 编译后的知识层。
+ai_kb/wiki/indexes/    机器可读 JSON 索引。
 ai_kb/schema/          agent 维护规则。
 ai_kb/export_for_ai/   给 ChatGPT / Claude / Gemini 等工具读取的消费层。
 archive/               归档资料。
@@ -28,13 +29,19 @@ archive/               归档资料。
 
 ## CLI
 
-Phase 5 支持：
+v0.2 支持：
 
 ```bash
 llm-wiki init ./SimonKnowledgeBase
 llm-wiki manifest scan ./SimonKnowledgeBase
+llm-wiki manifest scan ./SimonKnowledgeBase --no-preserve-manual-fields
 llm-wiki source-card create ./SimonKnowledgeBase ai_kb/raw/meetings/example.md
 llm-wiki prompt ingest ./SimonKnowledgeBase ai_kb/raw/meetings/example.md
+llm-wiki prompt tag ./SimonKnowledgeBase ai_kb/wiki/projects/example.md
+llm-wiki tags list ./SimonKnowledgeBase/ai_kb/wiki/projects/example.md
+llm-wiki tags add ./SimonKnowledgeBase/ai_kb/wiki/projects/example.md --tag project/example
+llm-wiki tags set ./SimonKnowledgeBase/ai_kb/wiki/projects/example.md --tag status/draft
+llm-wiki index build ./SimonKnowledgeBase
 llm-wiki prompt lint-ai ./SimonKnowledgeBase
 llm-wiki lint ./SimonKnowledgeBase
 llm-wiki export current ./SimonKnowledgeBase
@@ -43,6 +50,20 @@ llm-wiki hermes install-skills --dry-run
 python scripts/validate_example.py
 ```
 
+## Obsidian Tags 与索引
+
+`llm-wiki tags` 会在 wiki Markdown 正文中写入受控 tag block：
+
+```md
+<!-- llm-wiki-tags:start -->
+#project/example #status/draft #capability/review
+<!-- llm-wiki-tags:end -->
+```
+
+tag 会规范化为小写 kebab-case，并支持 `#project/...`、`#capability/...`、`#status/...`
+等 namespace。CLI 拒绝写入 `ai_kb/raw/`，raw source 仍然保持不可变。`llm-wiki index build`
+会在 `ai_kb/wiki/indexes/` 下生成给工具消费的 JSON 索引。
+
 ## current_draft vs current
 
 `current_draft/` 是 AI 生成的当前状态草稿，需要人工审核。`current/` 是人工确认后的正式当前状态。agent 可以更新草稿，但不能在没有明确确认时修改 `current/`。
@@ -50,6 +71,7 @@ python scripts/validate_example.py
 ## 安全边界
 
 - `raw/` 是不可变事实源。
+- `llm-wiki tags add/set` 拒绝写入 `ai_kb/raw/`。
 - `current/` 需要人工确认。
 - `export_for_ai/` 是消费层，不是事实源。
 - 用户应在提交前 review diff。

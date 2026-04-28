@@ -31,13 +31,15 @@ def scan_manifest(
     *,
     output_format: ManifestFormat = "markdown",
     dry_run: bool = False,
+    preserve_manual_fields: bool = True,
 ) -> str:
     """Scan raw Markdown files and update source_manifest.md unless dry-run."""
 
     root = kb_root.expanduser().resolve()
-    raw_root = root / "ai_kb/raw"
     manifest_path = root / "ai_kb/wiki/source_manifest.md"
-    entries = [_entry_for_source(root, path) for path in sorted(raw_root.rglob("*.md"))]
+    entries = scan_entries(root)
+    if preserve_manual_fields:
+        entries = _preserve_manifest_fields(entries, read_manifest_entries(manifest_path))
 
     if output_format == "json":
         content = json.dumps([asdict(entry) for entry in entries], indent=2) + "\n"
@@ -49,6 +51,12 @@ def scan_manifest(
         manifest_path.write_text(content, encoding="utf-8")
 
     return content
+
+
+def scan_entries(kb_root: Path) -> list[ManifestEntry]:
+    root = kb_root.expanduser().resolve()
+    raw_root = root / "ai_kb/raw"
+    return [_entry_for_source(root, path) for path in sorted(raw_root.rglob("*.md"))]
 
 
 def render_manifest(entries: list[ManifestEntry]) -> str:
@@ -102,6 +110,31 @@ def manifest_source_paths(kb_root: Path) -> set[str]:
     return paths
 
 
+def read_manifest_entries(manifest_path: Path) -> dict[str, ManifestEntry]:
+    """Read existing manifest rows by source path."""
+
+    if not manifest_path.exists():
+        return {}
+    entries: dict[str, ManifestEntry] = {}
+    for line in manifest_path.read_text(encoding="utf-8").splitlines():
+        if not line.startswith("| ai_kb/raw/"):
+            continue
+        cells = [cell.strip().replace("\\|", "|") for cell in line.strip("|").split("|")]
+        if len(cells) < 7:
+            continue
+        entry = ManifestEntry(
+            source_path=cells[0],
+            date=cells[1],
+            source_type=cells[2],
+            project=cells[3],
+            ingest_status=cells[4],
+            source_card_status=cells[5],
+            last_updated=cells[6],
+        )
+        entries[entry.source_path] = entry
+    return entries
+
+
 def _entry_for_source(root: Path, path: Path) -> ManifestEntry:
     relative = path.relative_to(root).as_posix()
     metadata, _body = parse_frontmatter(path.read_text(encoding="utf-8"))
@@ -121,3 +154,26 @@ def _entry_for_source(root: Path, path: Path) -> ManifestEntry:
         source_card_status=card_status,
         last_updated=utc_now_iso(),
     )
+
+
+def _preserve_manifest_fields(
+    entries: list[ManifestEntry], existing: dict[str, ManifestEntry]
+) -> list[ManifestEntry]:
+    preserved: list[ManifestEntry] = []
+    for entry in entries:
+        old = existing.get(entry.source_path)
+        if not old:
+            preserved.append(entry)
+            continue
+        preserved.append(
+            ManifestEntry(
+                source_path=entry.source_path,
+                date=entry.date or old.date,
+                source_type=entry.source_type or old.source_type,
+                project=old.project or entry.project,
+                ingest_status=old.ingest_status or entry.ingest_status,
+                source_card_status=entry.source_card_status,
+                last_updated=entry.last_updated,
+            )
+        )
+    return preserved

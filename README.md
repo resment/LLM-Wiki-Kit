@@ -9,10 +9,10 @@ It is not a normal note template and it is not a RAG system. The project separat
 
 ## Status
 
-v0.1 Phase 5 provides deterministic scaffolding, initialization, manifest scanning,
+v0.2 provides deterministic scaffolding, initialization, manifest scanning,
 source-card templates, prompt rendering, linting, current export, mini-kb draft generation,
-richer docs, richer templates, an anonymized example knowledge base, optional Hermes skills,
-packaging metadata, and example validation. It does not call an LLM API by default.
+optional Hermes skills, Obsidian-friendly Markdown tags, machine-readable indexes, and
+stronger consistency checks. It does not call an LLM API by default.
 
 ## Quick Start
 
@@ -27,6 +27,7 @@ llm-wiki init ./SimonKnowledgeBase
 human/                 Personal writing area. AI should not edit it by default.
 ai_kb/raw/             Immutable source of truth.
 ai_kb/wiki/            AI-compiled knowledge layer.
+ai_kb/wiki/indexes/    Machine-readable JSON indexes.
 ai_kb/schema/          Maintenance rules for agents.
 ai_kb/export_for_ai/   Consumption layer for other AI tools.
 archive/               Archived material.
@@ -38,13 +39,19 @@ archive/               Archived material.
 
 ## CLI
 
-Phase 5 supports:
+v0.2 supports:
 
 ```bash
 llm-wiki init ./SimonKnowledgeBase
 llm-wiki manifest scan ./SimonKnowledgeBase
+llm-wiki manifest scan ./SimonKnowledgeBase --no-preserve-manual-fields
 llm-wiki source-card create ./SimonKnowledgeBase ai_kb/raw/meetings/example.md
 llm-wiki prompt ingest ./SimonKnowledgeBase ai_kb/raw/meetings/example.md
+llm-wiki prompt tag ./SimonKnowledgeBase ai_kb/wiki/projects/example.md
+llm-wiki tags list ./SimonKnowledgeBase/ai_kb/wiki/projects/example.md
+llm-wiki tags add ./SimonKnowledgeBase/ai_kb/wiki/projects/example.md --tag project/example
+llm-wiki tags set ./SimonKnowledgeBase/ai_kb/wiki/projects/example.md --tag status/draft
+llm-wiki index build ./SimonKnowledgeBase
 llm-wiki prompt lint-ai ./SimonKnowledgeBase
 llm-wiki lint ./SimonKnowledgeBase
 llm-wiki export current ./SimonKnowledgeBase
@@ -56,9 +63,24 @@ python scripts/validate_example.py
 Hermes integration is optional. Installed skills are prompt/procedure adapters and do not change
 the deterministic CLI safety model.
 
+## Obsidian Tags and Indexes
+
+`llm-wiki tags` writes controlled inline Markdown tags into wiki pages:
+
+```md
+<!-- llm-wiki-tags:start -->
+#project/example #status/draft #capability/review
+<!-- llm-wiki-tags:end -->
+```
+
+Tags are normalized to lowercase kebab-case and may use namespaces such as `#project/...`,
+`#capability/...`, and `#status/...`. The CLI refuses to write tags into `ai_kb/raw/`; raw sources
+remain immutable. `llm-wiki index build` writes JSON indexes under `ai_kb/wiki/indexes/` for tools.
+
 ## Safety Boundaries
 
 - Raw files are immutable.
+- `llm-wiki tags add/set` refuses to write inside `ai_kb/raw/`.
 - Current state requires human confirmation.
 - Export files are not the source of truth.
 - Users should review diffs before committing generated changes.

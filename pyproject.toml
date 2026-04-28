@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llm-wiki-kit"
-version = "0.1.0"
+version = "0.2.0"
 description = "Deterministic scaffolding and CLI helpers for LLM-compiled Markdown knowledge bases."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -52,6 +52,17 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 llm_wiki_kit = ["py.typed", "assets/hermes/skills/*/*.md"]
+
+[tool.setuptools.data-files]
+"templates/prompts" = [
+  "templates/prompts/confirm_current.md",
+  "templates/prompts/export.md",
+  "templates/prompts/ingest.md",
+  "templates/prompts/lint.md",
+  "templates/prompts/mini_kb.md",
+  "templates/prompts/query_writeback.md",
+  "templates/prompts/tag.md",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -14,6 +14,7 @@ def test_phase3_docs_are_expanded() -> None:
         "docs/mini-kb.md",
         "docs/hermes-deployment.md",
         "docs/codex-workflow.md",
+        "docs/obsidian-tags.md",
     ]
     for doc in docs:
         text = (REPO_ROOT / doc).read_text(encoding="utf-8")
@@ -24,8 +25,10 @@ def test_readmes_are_synchronized_for_current_phase() -> None:
     readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
     readme_cn = (REPO_ROOT / "README_CN.md").read_text(encoding="utf-8")
 
-    assert "Phase 5" in readme
-    assert "Phase 5" in readme_cn
+    assert "v0.2" in readme
+    assert "v0.2" in readme_cn
+    assert "Obsidian" in readme
+    assert "Obsidian" in readme_cn
     assert "product-knowledge-ops" in readme
     assert "product-knowledge-ops" in readme_cn
 
@@ -66,6 +69,7 @@ def test_prompt_templates_are_actionable() -> None:
         "mini_kb.md",
         "query_writeback.md",
         "confirm_current.md",
+        "tag.md",
     ]:
         text = (prompt_dir / name).read_text(encoding="utf-8")
         assert "Do not" in text or "Rules:" in text
