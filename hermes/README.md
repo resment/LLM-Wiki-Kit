@@ -11,6 +11,16 @@ follow the same safety model as the CLI:
 - preserve source paths;
 - output human review questions.
 
+Bundled skills:
+
+- `ingest_raw_source`
+- `lint_knowledge_base`
+- `manage_obsidian_tags`
+- `build_indexes`
+- `generate_mini_kb`
+- `export_for_ai`
+- `confirm_current`
+
 ## Install
 
 Dry run:
@@ -32,3 +42,19 @@ llm-wiki hermes install-skills --target /path/to/hermes/skills/llm-wiki-kit
 ```
 
 Existing skill directories are skipped unless `--force` is provided.
+
+## Configure a Knowledge Base
+
+After installing skills, bind the default knowledge base:
+
+```bash
+llm-wiki hermes configure-kb /path/to/YourKnowledgeBase
+```
+
+This writes:
+
+```text
+~/.hermes/skills/llm-wiki-kit/profiles/default.md
+```
+
+Use `--profile <name>` for additional knowledge bases.

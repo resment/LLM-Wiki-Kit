@@ -9,7 +9,7 @@ It is not a normal note template and it is not a RAG system. The project separat
 
 ## Status
 
-v0.2 provides deterministic scaffolding, initialization, manifest scanning,
+v0.2.2 provides deterministic scaffolding, initialization, manifest scanning,
 source-card templates, prompt rendering, linting, current export, mini-kb draft generation,
 optional Hermes skills, Obsidian-friendly Markdown tags, machine-readable indexes, and
 stronger consistency checks. It does not call an LLM API by default.
@@ -39,7 +39,7 @@ archive/               Archived material.
 
 ## CLI
 
-v0.2 supports:
+v0.2.2 supports:
 
 ```bash
 llm-wiki init ./SimonKnowledgeBase
@@ -57,11 +57,14 @@ llm-wiki lint ./SimonKnowledgeBase
 llm-wiki export current ./SimonKnowledgeBase
 llm-wiki mini-kb create ./SimonKnowledgeBase --topic "Example" --purpose "Review prep"
 llm-wiki hermes install-skills --dry-run
+llm-wiki hermes configure-kb ./SimonKnowledgeBase
 python scripts/validate_example.py
 ```
 
 Hermes integration is optional. Installed skills are prompt/procedure adapters and do not change
-the deterministic CLI safety model.
+the deterministic CLI safety model. v0.2.1 includes Hermes tags/index skills for the existing
+`llm-wiki tags` and `llm-wiki index build` workflows. v0.2.2 adds `configure-kb` so Hermes can
+remember a default knowledge-base path through a local profile.
 
 ## Obsidian Tags and Indexes
 
@@ -96,7 +99,17 @@ This project is not OSI open source because commercial use is reserved.
 
 ## Hermes and Codex
 
-Hermes integration is optional and lives under `hermes/`. Codex maintenance rules live in `AGENTS.md` and generated knowledge bases receive their own `AGENTS.md` and `ai_kb/schema/AGENTS.md`.
+Hermes integration is optional and lives under `hermes/`. It includes skills for ingest, lint,
+mini-kb, export, current confirmation, tags, and indexes. Codex maintenance rules live in
+`AGENTS.md` and generated knowledge bases receive their own `AGENTS.md` and `ai_kb/schema/AGENTS.md`.
+
+After installing Hermes skills, bind your default knowledge base:
+
+```bash
+llm-wiki hermes configure-kb ./SimonKnowledgeBase
+```
+
+This writes a profile under `~/.hermes/skills/llm-wiki-kit/profiles/`.
 
 ## Examples
 

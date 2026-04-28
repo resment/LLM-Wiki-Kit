@@ -1,5 +1,21 @@
 # Roadmap
 
+## v0.2.2 Status
+
+Implemented:
+
+- `llm-wiki hermes configure-kb <kb_root>` for first-use Hermes knowledge-base binding.
+- Local Hermes profiles under `~/.hermes/skills/llm-wiki-kit/profiles/`.
+- Install guidance that points users to configure a default knowledge-base path.
+
+## v0.2.1 Status
+
+Implemented:
+
+- Hermes `manage_obsidian_tags` skill for v0.2 tag workflows.
+- Hermes `build_indexes` skill for deterministic JSON index generation.
+- Documentation and package assets for Hermes tags/index workflows.
+
 ## v0.2 Status
 
 Implemented:

@@ -11,7 +11,7 @@ from rich.table import Table
 
 from llm_wiki_kit import __version__
 from llm_wiki_kit.export import export_current
-from llm_wiki_kit.hermes import install_skills
+from llm_wiki_kit.hermes import configure_knowledge_base_profile, install_skills
 from llm_wiki_kit.indexes import build_indexes
 from llm_wiki_kit.init_kb import InitError, init_knowledge_base
 from llm_wiki_kit.linting import lint_exit_code, lint_json, lint_knowledge_base
@@ -289,6 +289,39 @@ def hermes_install_skills(
     for path in result.skipped:
         table.add_row("skip", path.name, str(path))
     console.print(table)
+    console.print(
+        "Next: run [bold]llm-wiki hermes configure-kb <kb_root>[/bold] to bind a default KB."
+    )
+
+
+@hermes_app.command("configure-kb")
+def hermes_configure_kb(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    target: Annotated[
+        Path | None,
+        typer.Option("--target", help="Hermes llm-wiki-kit skill directory."),
+    ] = None,
+    profile: Annotated[str, typer.Option("--profile", help="Profile name.")] = "default",
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing.")] = False,
+    force: Annotated[bool, typer.Option("--force", help="Overwrite an existing profile.")] = False,
+) -> None:
+    """Bind a knowledge-base root for Hermes first-use workflows."""
+
+    try:
+        result = configure_knowledge_base_profile(
+            kb_root,
+            target=target,
+            profile=profile,
+            dry_run=dry_run,
+            force=force,
+        )
+    except (FileExistsError, FileNotFoundError, ValueError) as error:
+        console.print(f"[red]Error:[/red] {error}")
+        raise typer.Exit(code=1) from error
+    action = "Would write" if dry_run else "Wrote"
+    console.print(f"[green]{action}[/green] Hermes profile {result.path}")
+    if dry_run:
+        console.print(result.content)
 
 
 @tags_app.command("list")

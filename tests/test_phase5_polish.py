@@ -14,7 +14,7 @@ def test_project_metadata_is_release_ready() -> None:
     project = metadata["project"]
 
     assert project["name"] == "llm-wiki-kit"
-    assert project["version"] == "0.2.0"
+    assert project["version"] == "0.2.2"
     assert project["requires-python"] == ">=3.11"
     assert project["license"]["text"] == "PolyForm-Noncommercial-1.0.0"
     assert "llm-wiki" in project["scripts"]
@@ -36,6 +36,10 @@ def test_manifest_includes_public_assets() -> None:
     assert "recursive-include hermes *.md *.sh" in manifest
     assert "recursive-include examples *.md" in manifest
     assert "assets/hermes/skills/*/*.md" in setuptools_config["package-data"]["llm_wiki_kit"]
+    assert (REPO_ROOT / "src/llm_wiki_kit/assets/hermes/skills/build_indexes/SKILL.md").is_file()
+    assert (
+        REPO_ROOT / "src/llm_wiki_kit/assets/hermes/skills/manage_obsidian_tags/SKILL.md"
+    ).is_file()
     assert "templates/prompts/tag.md" in data_files["templates/prompts"]
     assert "COMMERCIAL.md" in setuptools_config["license-files"]
     assert "CONTRIBUTING.md" in setuptools_config["license-files"]
@@ -57,10 +61,16 @@ def test_readmes_and_roadmap_are_v02_current() -> None:
     readme_cn = (REPO_ROOT / "README_CN.md").read_text(encoding="utf-8")
     roadmap = (REPO_ROOT / "ROADMAP.md").read_text(encoding="utf-8")
 
-    assert "v0.2" in readme
-    assert "v0.2" in readme_cn
+    assert "v0.2.2" in readme
+    assert "v0.2.2" in readme_cn
     assert "Obsidian" in readme
     assert "Obsidian" in readme_cn
+    assert "Hermes tags/index" in readme
+    assert "Hermes tags/index" in readme_cn
+    assert "configure-kb" in readme
+    assert "configure-kb" in readme_cn
+    assert "v0.2.2 Status" in roadmap
+    assert "v0.2.1 Status" in roadmap
     assert "v0.2 Status" in roadmap
     assert "Phase 5" in roadmap
     assert "No built-in LLM API calls" in roadmap

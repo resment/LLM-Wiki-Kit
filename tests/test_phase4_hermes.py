@@ -3,16 +3,19 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from llm_wiki_kit.cli import app
-from llm_wiki_kit.hermes import install_skills
+from llm_wiki_kit.hermes import configure_knowledge_base_profile, install_skills
+from llm_wiki_kit.init_kb import init_knowledge_base
 
 runner = CliRunner()
 
 EXPECTED_SKILLS = {
+    "build_indexes",
+    "confirm_current",
+    "export_for_ai",
+    "generate_mini_kb",
     "ingest_raw_source",
     "lint_knowledge_base",
-    "generate_mini_kb",
-    "export_for_ai",
-    "confirm_current",
+    "manage_obsidian_tags",
 }
 
 
@@ -69,7 +72,52 @@ def test_cli_hermes_install_dry_run(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     assert "Would install" in result.output
     assert "ingest_raw_source" in result.output
+    assert "configure-kb" in result.output
     assert not target.exists()
+
+
+def test_hermes_configure_kb_writes_default_profile(tmp_path: Path) -> None:
+    kb_root = tmp_path / "kb"
+    target = tmp_path / "skills"
+    init_knowledge_base(kb_root)
+
+    result = configure_knowledge_base_profile(kb_root, target=target)
+
+    assert result.path == target / "profiles/default.md"
+    assert result.path.is_file()
+    assert str(kb_root.resolve()) in result.content
+    assert "ai_kb/raw/" in result.content
+
+
+def test_hermes_configure_kb_dry_run_does_not_write(tmp_path: Path) -> None:
+    kb_root = tmp_path / "kb"
+    target = tmp_path / "skills"
+    init_knowledge_base(kb_root)
+
+    result = configure_knowledge_base_profile(kb_root, target=target, dry_run=True)
+
+    assert result.dry_run is True
+    assert not result.path.exists()
+    assert str(kb_root.resolve()) in result.content
+
+
+def test_hermes_configure_kb_requires_force_for_existing_profile(tmp_path: Path) -> None:
+    kb_root = tmp_path / "kb"
+    target = tmp_path / "skills"
+    init_knowledge_base(kb_root)
+    configure_knowledge_base_profile(kb_root, target=target)
+
+    result = runner.invoke(app, ["hermes", "configure-kb", str(kb_root), "--target", str(target)])
+
+    assert result.exit_code == 1
+    assert "already exists" in result.output
+
+    force_result = runner.invoke(
+        app,
+        ["hermes", "configure-kb", str(kb_root), "--target", str(target), "--force"],
+    )
+    assert force_result.exit_code == 0, force_result.output
+    assert "Wrote" in force_result.output
 
 
 def test_hermes_skill_docs_have_required_sections() -> None:
