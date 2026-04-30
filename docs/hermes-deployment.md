@@ -50,6 +50,7 @@ llm-wiki hermes status
 Bind the default knowledge base for first-use Hermes workflows:
 
 ```bash
+llm-wiki agents wizard /path/to/YourKnowledgeBase
 llm-wiki hermes bootstrap-prompt /path/to/YourKnowledgeBase
 llm-wiki hermes configure-kb /path/to/YourKnowledgeBase
 ```
@@ -79,6 +80,17 @@ llm-wiki hermes status --target /tmp/hermes-skills/llm-wiki-kit
 ```
 
 ## Knowledge Base Profiles
+
+v0.3.0 adds KB-local Agent access policy:
+
+```bash
+llm-wiki agents configure /path/to/YourKnowledgeBase --primary-agent hermes
+llm-wiki agents status /path/to/YourKnowledgeBase
+```
+
+Hermes profiles now include the current Hermes access mode when `.llm-wiki/agent_access.yaml`
+exists. A common setup is Hermes as the read/write Agent and Claude Desktop, Codex, or OpenClaw as
+read-only consumers.
 
 `configure-kb` writes a profile file under:
 
@@ -128,6 +140,7 @@ semantic wiki update.
 - "Use llm-wiki-kit default knowledge base and process the file I just uploaded."
 - "Run daily maintenance for my default llm-wiki-kit knowledge base."
 - "Check whether llm-wiki-kit Hermes skills are installed and which KB profile is active."
+- "Configure Hermes as the primary llm-wiki writer and keep Claude Desktop read-only."
 
 ## Shell Install
 

@@ -14,7 +14,7 @@ def test_project_metadata_is_release_ready() -> None:
     project = metadata["project"]
 
     assert project["name"] == "llm-wiki-kit"
-    assert project["version"] == "0.2.5"
+    assert project["version"] == "0.3.0"
     assert project["requires-python"] == ">=3.11"
     assert project["license"]["text"] == "PolyForm-Noncommercial-1.0.0"
     assert "llm-wiki" in project["scripts"]
@@ -62,13 +62,13 @@ def test_license_files_reserve_commercial_rights() -> None:
     assert "separate commercial licenses" in contributing
 
 
-def test_readmes_and_roadmap_are_v02_current() -> None:
+def test_readmes_and_roadmap_are_v03_current() -> None:
     readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
     readme_cn = (REPO_ROOT / "README_CN.md").read_text(encoding="utf-8")
     roadmap = (REPO_ROOT / "ROADMAP.md").read_text(encoding="utf-8")
 
-    assert "v0.2.5" in readme
-    assert "v0.2.5" in readme_cn
+    assert "v0.3.0" in readme
+    assert "v0.3.0" in readme_cn
     assert "Obsidian" in readme
     assert "Obsidian" in readme_cn
     assert "Hermes tags/index" in readme
@@ -83,6 +83,13 @@ def test_readmes_and_roadmap_are_v02_current() -> None:
     assert "doctor" in readme_cn
     assert "hermes status" in readme
     assert "hermes status" in readme_cn
+    assert "claude-desktop" in readme
+    assert "claude-desktop" in readme_cn
+    assert "agents wizard" in readme
+    assert "agents wizard" in readme_cn
+    assert "MCP" in readme
+    assert "MCP" in readme_cn
+    assert "v0.3.0 Status" in roadmap
     assert "v0.2.5 Status" in roadmap
     assert "v0.2.4 Status" in roadmap
     assert "v0.2.3 Status" in roadmap

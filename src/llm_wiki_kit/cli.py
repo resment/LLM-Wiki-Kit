@@ -10,6 +10,21 @@ from rich.console import Console
 from rich.table import Table
 
 from llm_wiki_kit import __version__
+from llm_wiki_kit.agent_access import (
+    AGENTS,
+    access_config_path,
+    agent_access_json,
+    agent_access_markdown,
+    configure_agent_access,
+    normalize_agent,
+    read_agent_access_config,
+    set_agent_access,
+)
+from llm_wiki_kit.claude_desktop import (
+    claude_desktop_status_json,
+    inspect_claude_desktop_status,
+    render_claude_desktop_config,
+)
 from llm_wiki_kit.doctor import doctor_json, doctor_markdown, run_doctor
 from llm_wiki_kit.export import export_current
 from llm_wiki_kit.hermes import (
@@ -23,6 +38,7 @@ from llm_wiki_kit.init_kb import InitError, init_knowledge_base
 from llm_wiki_kit.linting import lint_exit_code, lint_json, lint_knowledge_base
 from llm_wiki_kit.maintenance import maintenance_json, maintenance_markdown, run_daily_maintenance
 from llm_wiki_kit.manifest import scan_manifest
+from llm_wiki_kit.mcp_server import serve_mcp_stdio
 from llm_wiki_kit.mini_kb import create_mini_kb
 from llm_wiki_kit.prompts import render_ingest_prompt, render_lint_ai_prompt, render_tag_prompt
 from llm_wiki_kit.raw_import import RAW_SOURCE_TYPES, import_raw_source
@@ -40,6 +56,9 @@ prompt_app = typer.Typer(help="Render prompts for external agents.")
 export_app = typer.Typer(help="Export confirmed knowledge for AI tools.")
 mini_kb_app = typer.Typer(help="Create mini knowledge-base drafts.")
 hermes_app = typer.Typer(help="Install optional Hermes adapter skills.")
+agents_app = typer.Typer(help="Configure multi-agent read/write access.")
+claude_desktop_app = typer.Typer(help="Configure Claude Desktop read-only MCP access.")
+mcp_app = typer.Typer(help="Serve read-only MCP adapters.")
 tags_app = typer.Typer(help="Manage Obsidian inline tags.")
 index_app = typer.Typer(help="Build machine-readable indexes.")
 raw_app = typer.Typer(help="Import uploaded raw source files.")
@@ -52,6 +71,9 @@ app.add_typer(prompt_app, name="prompt")
 app.add_typer(export_app, name="export")
 app.add_typer(mini_kb_app, name="mini-kb")
 app.add_typer(hermes_app, name="hermes")
+app.add_typer(agents_app, name="agents")
+app.add_typer(claude_desktop_app, name="claude-desktop")
+app.add_typer(mcp_app, name="mcp")
 app.add_typer(tags_app, name="tags")
 app.add_typer(index_app, name="index")
 app.add_typer(raw_app, name="raw")
@@ -74,6 +96,32 @@ def main(
     ),
 ) -> None:
     """Run llm-wiki commands."""
+
+
+def _write_agent_config(
+    kb_root: Path,
+    primary_agent: str,
+    *,
+    dry_run: bool,
+    force: bool,
+) -> None:
+    try:
+        result = configure_agent_access(
+            kb_root,
+            primary_agent=primary_agent,
+            dry_run=dry_run,
+            force=force,
+        )
+    except FileExistsError as error:
+        console.print(f"[red]Error:[/red] {error}")
+        console.print("Use --force to overwrite the existing agent access config.")
+        raise typer.Exit(code=1) from error
+    except ValueError as error:
+        console.print(f"[red]Error:[/red] {error}")
+        raise typer.Exit(code=2) from error
+    action = "Would write" if dry_run else "Wrote"
+    console.print(f"[green]{action}[/green] {result.path}")
+    console.print(agent_access_markdown(result.config, result.path))
 
 
 @app.command()
@@ -288,6 +336,160 @@ def mini_kb_create(
     console.print(f"[green]{action}[/green] {result.path}")
 
 
+@agents_app.command("wizard")
+def agents_wizard(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    primary_agent: Annotated[
+        str | None,
+        typer.Option("--primary-agent", help="Primary read/write agent."),
+    ] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing.")] = False,
+    force: Annotated[bool, typer.Option("--force", help="Overwrite existing policy.")] = False,
+) -> None:
+    """Create a first-use multi-agent access policy."""
+
+    selected = primary_agent or typer.prompt(
+        f"Primary read/write agent ({', '.join(AGENTS)})",
+        default="hermes",
+    )
+    _write_agent_config(kb_root, selected, dry_run=dry_run, force=force)
+
+
+@agents_app.command("configure")
+def agents_configure(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    primary_agent: Annotated[
+        str,
+        typer.Option("--primary-agent", help="Primary read/write agent."),
+    ],
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing.")] = False,
+    force: Annotated[bool, typer.Option("--force", help="Overwrite existing policy.")] = False,
+) -> None:
+    """Write a deterministic multi-agent access policy."""
+
+    _write_agent_config(kb_root, primary_agent, dry_run=dry_run, force=force)
+
+
+@agents_app.command("status")
+def agents_status(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    json_output: Annotated[bool, typer.Option("--json", help="Print JSON output.")] = False,
+) -> None:
+    """Show the configured multi-agent access policy."""
+
+    try:
+        config = read_agent_access_config(kb_root)
+    except (FileNotFoundError, ValueError) as error:
+        console.print(f"[red]Error:[/red] {error}")
+        raise typer.Exit(code=1) from error
+    if json_output:
+        console.out(agent_access_json(config))
+    else:
+        console.print(agent_access_markdown(config, access_config_path(kb_root)))
+
+
+@agents_app.command("set")
+def agents_set(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    agent: Annotated[str, typer.Option("--agent", help="Agent to update.")],
+    mode: Annotated[str, typer.Option("--mode", help="read or write.")],
+    read_scope: Annotated[
+        str,
+        typer.Option("--read-scope", help="exports-only, wiki-context, or full-kb."),
+    ] = "wiki-context",
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing.")] = False,
+) -> None:
+    """Update one agent policy."""
+
+    try:
+        result = set_agent_access(
+            kb_root,
+            agent=agent,
+            mode=mode,
+            read_scope=read_scope,
+            dry_run=dry_run,
+        )
+    except (FileNotFoundError, ValueError) as error:
+        console.print(f"[red]Error:[/red] {error}")
+        raise typer.Exit(code=2) from error
+    action = "Would update" if dry_run else "Updated"
+    console.print(f"[green]{action}[/green] {result.path}")
+    console.print(agent_access_markdown(result.config, result.path))
+
+
+@agents_app.command("policy")
+def agents_policy(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    agent: Annotated[str, typer.Option("--agent", help="Agent to inspect.")],
+    json_output: Annotated[bool, typer.Option("--json", help="Print JSON output.")] = False,
+) -> None:
+    """Show one agent policy."""
+
+    try:
+        config = read_agent_access_config(kb_root)
+        normalized_agent = normalize_agent(agent)
+    except (FileNotFoundError, ValueError) as error:
+        console.print(f"[red]Error:[/red] {error}")
+        raise typer.Exit(code=2) from error
+    policy = config.agents[normalized_agent]
+    payload = {
+        "agent": normalized_agent,
+        "mode": policy.mode,
+        "read_scope": policy.read_scope,
+        "primary": normalized_agent == config.primary_agent,
+    }
+    if json_output:
+        import json
+
+        console.out(json.dumps(payload, indent=2) + "\n")
+    else:
+        console.print(
+            f"{normalized_agent}: mode={policy.mode}, read_scope={policy.read_scope}, "
+            f"primary={payload['primary']}"
+        )
+
+
+@claude_desktop_app.command("config")
+def claude_desktop_config(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+) -> None:
+    """Print a Claude Desktop MCP config snippet."""
+
+    console.out(render_claude_desktop_config(kb_root))
+
+
+@claude_desktop_app.command("status")
+def claude_desktop_status(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    json_output: Annotated[bool, typer.Option("--json", help="Print JSON output.")] = False,
+) -> None:
+    """Show Claude Desktop policy and KB status."""
+
+    try:
+        status = inspect_claude_desktop_status(kb_root)
+    except (FileNotFoundError, ValueError) as error:
+        console.print(f"[red]Error:[/red] {error}")
+        raise typer.Exit(code=1) from error
+    if json_output:
+        console.out(claude_desktop_status_json(status))
+    else:
+        console.print(f"KB root: {status.kb_root}")
+        console.print(f"Claude Desktop mode: {status.policy_mode}")
+        console.print(f"Read scope: {status.read_scope}")
+        console.print(f"KB OK: {status.kb_ok}")
+        console.print(status.message)
+
+
+@mcp_app.command("serve")
+def mcp_serve(
+    kb_root: Annotated[Path, typer.Option("--kb-root", help="Knowledge base root.")],
+    agent: Annotated[str, typer.Option("--agent", help="MCP agent name.")] = "claude-desktop",
+) -> None:
+    """Serve a read-only stdio MCP adapter."""
+
+    serve_mcp_stdio(kb_root=kb_root, agent=agent)
+
+
 @hermes_app.command("install-skills")
 def hermes_install_skills(
     target: Annotated[
@@ -390,12 +592,16 @@ def hermes_status_command(
     profile_table = Table(title="Hermes Profiles")
     profile_table.add_column("Profile")
     profile_table.add_column("KB Root")
+    profile_table.add_column("Access")
+    profile_table.add_column("Read Scope")
     profile_table.add_column("Valid")
     profile_table.add_column("Message")
     for profile in status.profiles:
         profile_table.add_row(
             profile.name,
             profile.kb_root,
+            profile.access_mode,
+            profile.read_scope,
             str(profile.valid),
             profile.message,
         )

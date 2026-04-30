@@ -56,6 +56,7 @@ llm-wiki hermes status
 After installing skills, bind the default knowledge base:
 
 ```bash
+llm-wiki agents wizard /path/to/YourKnowledgeBase
 llm-wiki hermes bootstrap-prompt /path/to/YourKnowledgeBase
 llm-wiki hermes configure-kb /path/to/YourKnowledgeBase
 ```
@@ -70,6 +71,19 @@ This writes:
 ```
 
 Use `--profile <name>` for additional knowledge bases.
+
+v0.3.0 stores multi-Agent access policy in the knowledge base:
+
+```text
+/path/to/YourKnowledgeBase/.llm-wiki/agent_access.yaml
+```
+
+Use Hermes as the primary writer when Hermes should maintain the KB, and keep Claude Desktop or
+other consumers in read mode:
+
+```bash
+llm-wiki agents configure /path/to/YourKnowledgeBase --primary-agent hermes
+```
 
 ## Uploaded Files and Daily Maintenance
 

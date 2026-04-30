@@ -9,6 +9,8 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
+from llm_wiki_kit.agent_access import AgentPolicy, read_agent_policy
+
 DEFAULT_HERMES_SKILL_TARGET = Path.home() / ".hermes/skills/llm-wiki-kit"
 DEFAULT_HERMES_PROFILE = "default"
 
@@ -37,6 +39,8 @@ class HermesProfileStatus:
     name: str
     path: Path
     kb_root: str
+    access_mode: str
+    read_scope: str
     valid: bool
     message: str
 
@@ -151,6 +155,7 @@ def configure_knowledge_base_profile(
 
 def render_hermes_profile(kb_root: Path, *, profile: str = DEFAULT_HERMES_PROFILE) -> str:
     root = kb_root.expanduser().resolve()
+    access_summary = _profile_access_summary(root, "hermes")
     return f"""# llm-wiki-kit Hermes Profile: {profile}
 
 Knowledge base root:
@@ -161,6 +166,10 @@ Knowledge base root:
 
 Use this knowledge base root when the user asks Hermes to maintain the default llm-wiki-kit
 knowledge base.
+
+## Agent Access
+
+{access_summary}
 
 ## Default Commands
 
@@ -295,6 +304,8 @@ def _inspect_profiles(destination_root: Path) -> list[HermesProfileStatus]:
                     name=path.stem,
                     path=path,
                     kb_root="",
+                    access_mode="unknown",
+                    read_scope="unknown",
                     valid=False,
                     message="Profile has no knowledge base root.",
                 )
@@ -314,6 +325,8 @@ def _inspect_profiles(destination_root: Path) -> list[HermesProfileStatus]:
                 name=path.stem,
                 path=path,
                 kb_root=kb_root,
+                access_mode=_profile_policy(root).mode,
+                read_scope=_profile_policy(root).read_scope,
                 valid=valid,
                 message=(
                     "Profile target is valid."
@@ -331,3 +344,21 @@ def _extract_profile_kb_root(path: Path) -> str:
     if match:
         return match.group("root").strip()
     return ""
+
+
+def _profile_access_summary(root: Path, agent: str) -> str:
+    try:
+        policy = read_agent_policy(root, agent)
+    except (FileNotFoundError, ValueError):
+        return (
+            "No `.llm-wiki/agent_access.yaml` policy is configured yet. "
+            "Run `llm-wiki agents wizard <kb_root>` after installation."
+        )
+    return f"Hermes access mode: `{policy.mode}`. Read scope: `{policy.read_scope}`."
+
+
+def _profile_policy(root: Path) -> AgentPolicy:
+    try:
+        return read_agent_policy(root, "hermes")
+    except (FileNotFoundError, ValueError):
+        return AgentPolicy(mode="unknown", read_scope="unknown")

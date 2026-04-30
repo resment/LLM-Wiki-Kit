@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from llm_wiki_kit import __version__
+from llm_wiki_kit.agent_access import access_config_path
 from llm_wiki_kit.linting import lint_knowledge_base
 from llm_wiki_kit.manifest import manifest_source_paths
 from llm_wiki_kit.source_card import source_card_path
@@ -71,6 +72,25 @@ def run_doctor(kb_root: Path) -> DoctorReport:
         _append_path_check(checks, root / relative, relative, expected="file")
     for relative in REQUIRED_KB_DIRECTORIES:
         _append_path_check(checks, root / relative, relative, expected="dir")
+
+    if access_config_path(root).exists():
+        checks.append(
+            DoctorCheck(
+                "info",
+                "agent-access",
+                ".llm-wiki/agent_access.yaml",
+                "Agent access policy exists.",
+            )
+        )
+    else:
+        checks.append(
+            DoctorCheck(
+                "warning",
+                "agent-access-missing",
+                ".llm-wiki/agent_access.yaml",
+                "Run llm-wiki agents wizard to configure multi-agent access.",
+            )
+        )
 
     registered = manifest_source_paths(root)
     raw_sources = _raw_sources(root)
