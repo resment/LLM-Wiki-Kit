@@ -14,7 +14,7 @@ def test_project_metadata_is_release_ready() -> None:
     project = metadata["project"]
 
     assert project["name"] == "llm-wiki-kit"
-    assert project["version"] == "0.2.4"
+    assert project["version"] == "0.2.5"
     assert project["requires-python"] == ">=3.11"
     assert project["license"]["text"] == "PolyForm-Noncommercial-1.0.0"
     assert "llm-wiki" in project["scripts"]
@@ -67,8 +67,8 @@ def test_readmes_and_roadmap_are_v02_current() -> None:
     readme_cn = (REPO_ROOT / "README_CN.md").read_text(encoding="utf-8")
     roadmap = (REPO_ROOT / "ROADMAP.md").read_text(encoding="utf-8")
 
-    assert "v0.2.4" in readme
-    assert "v0.2.4" in readme_cn
+    assert "v0.2.5" in readme
+    assert "v0.2.5" in readme_cn
     assert "Obsidian" in readme
     assert "Obsidian" in readme_cn
     assert "Hermes tags/index" in readme
@@ -79,6 +79,11 @@ def test_readmes_and_roadmap_are_v02_current() -> None:
     assert "bootstrap-prompt" in readme_cn
     assert "maintenance daily" in readme
     assert "maintenance daily" in readme_cn
+    assert "doctor" in readme
+    assert "doctor" in readme_cn
+    assert "hermes status" in readme
+    assert "hermes status" in readme_cn
+    assert "v0.2.5 Status" in roadmap
     assert "v0.2.4 Status" in roadmap
     assert "v0.2.3 Status" in roadmap
     assert "v0.2.2 Status" in roadmap

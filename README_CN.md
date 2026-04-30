@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-v0.2.4 提供确定性的项目脚手架、初始化命令、manifest 扫描、source card 模板、prompt 渲染、lint、current 导出、mini-kb 草稿、可选 Hermes skills、Obsidian 友好的 Markdown tags、机器可读索引、上传文档导入和每日维护报告。默认不调用任何 LLM API。
+v0.2.5 提供确定性的项目脚手架、初始化命令、manifest 扫描、source card 模板、prompt 渲染、lint、current 导出、mini-kb 草稿、可选 Hermes skills、Obsidian 友好的 Markdown tags、机器可读索引、上传文档导入、每日维护报告、doctor 和 Hermes status 诊断。默认不调用任何 LLM API。
 
 ## 快速开始
 
@@ -31,7 +31,7 @@ archive/               归档资料。
 
 ## CLI
 
-v0.2.4 支持：
+v0.2.5 支持：
 
 ```bash
 llm-wiki init ./SimonKnowledgeBase
@@ -46,15 +46,28 @@ llm-wiki tags set ./SimonKnowledgeBase/ai_kb/wiki/projects/example.md --tag stat
 llm-wiki index build ./SimonKnowledgeBase
 llm-wiki raw import ./SimonKnowledgeBase ~/Downloads/uploaded.md --source-type docs
 llm-wiki maintenance daily ./SimonKnowledgeBase
+llm-wiki doctor ./SimonKnowledgeBase
 llm-wiki prompt lint-ai ./SimonKnowledgeBase
 llm-wiki lint ./SimonKnowledgeBase
 llm-wiki export current ./SimonKnowledgeBase
 llm-wiki mini-kb create ./SimonKnowledgeBase --topic "Example" --purpose "Review prep"
 llm-wiki hermes install-skills --dry-run
+llm-wiki hermes status
 llm-wiki hermes bootstrap-prompt ./SimonKnowledgeBase
 llm-wiki hermes configure-kb ./SimonKnowledgeBase
 python scripts/validate_example.py
 ```
+
+## 安装后验证
+
+初始化或配置 Hermes 后运行：
+
+```bash
+llm-wiki doctor ./SimonKnowledgeBase
+llm-wiki hermes status
+```
+
+`doctor` 检查知识库结构和确定性健康状态。`hermes status` 检查 skills、profiles 和默认知识库路径是否有效。
 
 ## Obsidian Tags 与索引
 

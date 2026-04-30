@@ -9,10 +9,11 @@ It is not a normal note template and it is not a RAG system. The project separat
 
 ## Status
 
-v0.2.4 provides deterministic scaffolding, initialization, manifest scanning,
+v0.2.5 provides deterministic scaffolding, initialization, manifest scanning,
 source-card templates, prompt rendering, linting, current export, mini-kb draft generation,
 optional Hermes skills, Obsidian-friendly Markdown tags, machine-readable indexes, and
-stronger consistency checks. It does not call an LLM API by default.
+stronger consistency checks. It also includes doctor and Hermes status diagnostics. It does not call
+an LLM API by default.
 
 ## Quick Start
 
@@ -41,7 +42,7 @@ archive/               Archived material.
 
 ## CLI
 
-v0.2.4 supports:
+v0.2.5 supports:
 
 ```bash
 llm-wiki init ./SimonKnowledgeBase
@@ -56,11 +57,13 @@ llm-wiki tags set ./SimonKnowledgeBase/ai_kb/wiki/projects/example.md --tag stat
 llm-wiki index build ./SimonKnowledgeBase
 llm-wiki raw import ./SimonKnowledgeBase ~/Downloads/uploaded.md --source-type docs
 llm-wiki maintenance daily ./SimonKnowledgeBase
+llm-wiki doctor ./SimonKnowledgeBase
 llm-wiki prompt lint-ai ./SimonKnowledgeBase
 llm-wiki lint ./SimonKnowledgeBase
 llm-wiki export current ./SimonKnowledgeBase
 llm-wiki mini-kb create ./SimonKnowledgeBase --topic "Example" --purpose "Review prep"
 llm-wiki hermes install-skills --dry-run
+llm-wiki hermes status
 llm-wiki hermes bootstrap-prompt ./SimonKnowledgeBase
 llm-wiki hermes configure-kb ./SimonKnowledgeBase
 python scripts/validate_example.py
@@ -72,6 +75,19 @@ the deterministic CLI safety model. v0.2.1 includes Hermes tags/index skills for
 remember a default knowledge-base path through a local profile. v0.2.3 adds `bootstrap-prompt` so
 users can paste a natural-language installation request into Hermes Agent.
 v0.2.4 adds uploaded-file raw import and daily deterministic maintenance reports.
+v0.2.5 adds `doctor` and `hermes status` for installation and pre-use diagnostics.
+
+## Verify Installation
+
+After init or Hermes setup, run:
+
+```bash
+llm-wiki doctor ./SimonKnowledgeBase
+llm-wiki hermes status
+```
+
+`doctor` checks the knowledge-base layout and deterministic health. `hermes status` checks installed
+skills, profiles, and whether the configured knowledge-base path is valid.
 
 ## Obsidian Tags and Indexes
 

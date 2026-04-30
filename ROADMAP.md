@@ -1,5 +1,13 @@
 # Roadmap
 
+## v0.2.5 Status
+
+Implemented:
+
+- `llm-wiki doctor` for read-only knowledge-base diagnostics.
+- `llm-wiki hermes status` for installed skill and profile validation.
+- Installation verification docs for CLI and Hermes setup.
+
 ## v0.2.4 Status
 
 Implemented:

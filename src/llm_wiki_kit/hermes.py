@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import re
 import shutil
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from importlib.resources import files
 from pathlib import Path
+from typing import Any
 
 DEFAULT_HERMES_SKILL_TARGET = Path.home() / ".hermes/skills/llm-wiki-kit"
 DEFAULT_HERMES_PROFILE = "default"
@@ -29,6 +30,52 @@ class HermesProfileResult:
     path: Path
     content: str
     dry_run: bool
+
+
+@dataclass(frozen=True)
+class HermesProfileStatus:
+    name: str
+    path: Path
+    kb_root: str
+    valid: bool
+    message: str
+
+
+@dataclass(frozen=True)
+class HermesStatus:
+    target: Path
+    installed: bool
+    installed_skills: list[str]
+    missing_skills: list[str]
+    profiles: list[HermesProfileStatus]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "target": self.target.as_posix(),
+            "installed": self.installed,
+            "installed_skills": self.installed_skills,
+            "missing_skills": self.missing_skills,
+            "profiles": [
+                {
+                    **asdict(profile),
+                    "path": profile.path.as_posix(),
+                }
+                for profile in self.profiles
+            ],
+        }
+
+
+EXPECTED_HERMES_SKILLS = (
+    "build_indexes",
+    "confirm_current",
+    "daily_maintenance",
+    "export_for_ai",
+    "generate_mini_kb",
+    "import_uploaded_raw_source",
+    "ingest_raw_source",
+    "lint_knowledge_base",
+    "manage_obsidian_tags",
+)
 
 
 def install_skills(
@@ -57,6 +104,26 @@ def install_skills(
         shutil.copytree(source_skill, destination_skill)
 
     return result
+
+
+def inspect_hermes_status(target: Path | None = None) -> HermesStatus:
+    """Inspect installed Hermes skills and configured profiles."""
+
+    destination_root = (target or DEFAULT_HERMES_SKILL_TARGET).expanduser().resolve()
+    installed_skills = (
+        sorted(path.name for path in destination_root.iterdir() if path.is_dir())
+        if destination_root.exists()
+        else []
+    )
+    installed_skill_set = set(installed_skills)
+    missing_skills = [skill for skill in EXPECTED_HERMES_SKILLS if skill not in installed_skill_set]
+    return HermesStatus(
+        target=destination_root,
+        installed=destination_root.exists(),
+        installed_skills=installed_skills,
+        missing_skills=missing_skills,
+        profiles=_inspect_profiles(destination_root),
+    )
 
 
 def configure_knowledge_base_profile(
@@ -213,3 +280,54 @@ def _normalize_profile_name(profile: str) -> str:
     if not normalized:
         raise ValueError("Profile name must not be empty.")
     return normalized
+
+
+def _inspect_profiles(destination_root: Path) -> list[HermesProfileStatus]:
+    profile_root = destination_root / "profiles"
+    if not profile_root.exists():
+        return []
+    profiles: list[HermesProfileStatus] = []
+    for path in sorted(profile_root.glob("*.md")):
+        kb_root = _extract_profile_kb_root(path)
+        if not kb_root:
+            profiles.append(
+                HermesProfileStatus(
+                    name=path.stem,
+                    path=path,
+                    kb_root="",
+                    valid=False,
+                    message="Profile has no knowledge base root.",
+                )
+            )
+            continue
+        root = Path(kb_root).expanduser()
+        valid = root.exists() and all(
+            required.exists()
+            for required in (
+                root / "AGENTS.md",
+                root / "ai_kb/schema/AGENTS.md",
+                root / "ai_kb/wiki/source_manifest.md",
+            )
+        )
+        profiles.append(
+            HermesProfileStatus(
+                name=path.stem,
+                path=path,
+                kb_root=kb_root,
+                valid=valid,
+                message=(
+                    "Profile target is valid."
+                    if valid
+                    else "Profile target is missing or invalid."
+                ),
+            )
+        )
+    return profiles
+
+
+def _extract_profile_kb_root(path: Path) -> str:
+    text = path.read_text(encoding="utf-8")
+    match = re.search(r"Knowledge base root:\n\n```text\n(?P<root>.*?)\n```", text, re.DOTALL)
+    if match:
+        return match.group("root").strip()
+    return ""

@@ -10,9 +10,11 @@ from rich.console import Console
 from rich.table import Table
 
 from llm_wiki_kit import __version__
+from llm_wiki_kit.doctor import doctor_json, doctor_markdown, run_doctor
 from llm_wiki_kit.export import export_current
 from llm_wiki_kit.hermes import (
     configure_knowledge_base_profile,
+    inspect_hermes_status,
     install_skills,
     render_bootstrap_prompt,
 )
@@ -110,6 +112,20 @@ def init(
         table.add_row("file", str(file_path))
 
     console.print(table)
+
+
+@app.command("doctor")
+def doctor_command(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    json_output: Annotated[bool, typer.Option("--json", help="Print JSON output.")] = False,
+) -> None:
+    """Run read-only installation and knowledge-base diagnostics."""
+
+    report = run_doctor(kb_root)
+    if json_output:
+        console.out(doctor_json(report))
+    else:
+        console.print(doctor_markdown(report))
 
 
 @manifest_app.command("scan")
@@ -346,6 +362,44 @@ def hermes_bootstrap_prompt(
     """Print a natural-language Hermes Agent install prompt."""
 
     console.out(render_bootstrap_prompt(kb_root, target=target, profile=profile))
+
+
+@hermes_app.command("status")
+def hermes_status_command(
+    target: Annotated[
+        Path | None,
+        typer.Option("--target", help="Hermes llm-wiki-kit skill directory."),
+    ] = None,
+) -> None:
+    """Show installed Hermes skills and configured knowledge-base profiles."""
+
+    status = inspect_hermes_status(target=target)
+    console.print(f"Hermes target: {status.target}")
+    console.print(f"Installed: {status.installed}")
+    table = Table(title="Hermes Skills")
+    table.add_column("Skill")
+    table.add_column("Status")
+    for skill in status.installed_skills:
+        if skill == "profiles":
+            continue
+        table.add_row(skill, "installed")
+    for skill in status.missing_skills:
+        table.add_row(skill, "missing")
+    console.print(table)
+
+    profile_table = Table(title="Hermes Profiles")
+    profile_table.add_column("Profile")
+    profile_table.add_column("KB Root")
+    profile_table.add_column("Valid")
+    profile_table.add_column("Message")
+    for profile in status.profiles:
+        profile_table.add_row(
+            profile.name,
+            profile.kb_root,
+            str(profile.valid),
+            profile.message,
+        )
+    console.print(profile_table)
 
 
 @tags_app.command("list")

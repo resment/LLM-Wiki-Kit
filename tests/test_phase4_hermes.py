@@ -5,6 +5,7 @@ from typer.testing import CliRunner
 from llm_wiki_kit.cli import app
 from llm_wiki_kit.hermes import (
     configure_knowledge_base_profile,
+    inspect_hermes_status,
     install_skills,
     render_bootstrap_prompt,
 )
@@ -152,6 +153,64 @@ def test_cli_hermes_bootstrap_prompt(tmp_path: Path) -> None:
     assert "请帮我安装并配置" in result.output
     assert "llm-wiki hermes install-skills" in result.output
     assert str(kb_root.resolve()) in result.output
+
+
+def test_hermes_status_reports_missing_install(tmp_path: Path) -> None:
+    target = tmp_path / "missing-skills"
+
+    status = inspect_hermes_status(target=target)
+
+    assert status.installed is False
+    assert "ingest_raw_source" in status.missing_skills
+    assert status.profiles == []
+
+
+def test_hermes_status_reports_skills_and_valid_profile(tmp_path: Path) -> None:
+    target = tmp_path / "skills"
+    kb_root = tmp_path / "kb"
+    init_knowledge_base(kb_root)
+    install_skills(target=target)
+    configure_knowledge_base_profile(kb_root, target=target)
+
+    status = inspect_hermes_status(target=target)
+
+    assert status.installed is True
+    assert "ingest_raw_source" in status.installed_skills
+    assert status.missing_skills == []
+    assert status.profiles[0].name == "default"
+    assert status.profiles[0].valid is True
+
+
+def test_hermes_status_reports_invalid_profile(tmp_path: Path) -> None:
+    target = tmp_path / "skills"
+    profile_root = target / "profiles"
+    profile_root.mkdir(parents=True)
+    (profile_root / "default.md").write_text(
+        """# Profile
+
+Knowledge base root:
+
+```text
+/tmp/does-not-exist
+```
+""",
+        encoding="utf-8",
+    )
+
+    status = inspect_hermes_status(target=target)
+
+    assert status.profiles[0].valid is False
+    assert "invalid" in status.profiles[0].message
+
+
+def test_cli_hermes_status(tmp_path: Path) -> None:
+    target = tmp_path / "skills"
+
+    result = runner.invoke(app, ["hermes", "status", "--target", str(target)])
+
+    assert result.exit_code == 0, result.output
+    assert "Installed: False" in result.output
+    assert "ingest_raw_source" in result.output
 
 
 def test_hermes_skill_docs_have_required_sections() -> None:

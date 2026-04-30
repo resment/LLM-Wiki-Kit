@@ -45,6 +45,12 @@ llm-wiki hermes install-skills --target /path/to/hermes/skills/llm-wiki-kit
 
 Existing skill directories are skipped unless `--force` is provided.
 
+Check status:
+
+```bash
+llm-wiki hermes status
+```
+
 ## Configure a Knowledge Base
 
 After installing skills, bind the default knowledge base:

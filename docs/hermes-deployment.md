@@ -44,6 +44,7 @@ Install to the default target:
 
 ```bash
 llm-wiki hermes install-skills
+llm-wiki hermes status
 ```
 
 Bind the default knowledge base for first-use Hermes workflows:
@@ -69,6 +70,13 @@ llm-wiki hermes install-skills --target /tmp/hermes-skills/llm-wiki-kit
 ```
 
 Existing skill directories are skipped unless `--force` is provided.
+
+Check installed skills and profiles:
+
+```bash
+llm-wiki hermes status
+llm-wiki hermes status --target /tmp/hermes-skills/llm-wiki-kit
+```
 
 ## Knowledge Base Profiles
 
@@ -114,6 +122,12 @@ llm-wiki maintenance daily /path/to/YourKnowledgeBase
 The report identifies new raw sources, missing source cards, lint findings, and recommended actions.
 Use Hermes' already configured LLM environment only when the report recommends a targeted ingest or
 semantic wiki update.
+
+## Natural-Language Examples
+
+- "Use llm-wiki-kit default knowledge base and process the file I just uploaded."
+- "Run daily maintenance for my default llm-wiki-kit knowledge base."
+- "Check whether llm-wiki-kit Hermes skills are installed and which KB profile is active."
 
 ## Shell Install
 
