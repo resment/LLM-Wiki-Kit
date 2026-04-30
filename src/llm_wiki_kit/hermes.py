@@ -101,7 +101,18 @@ knowledge base.
 llm-wiki manifest scan {root}
 llm-wiki lint {root}
 llm-wiki index build {root}
+llm-wiki maintenance daily {root}
 ```
+
+## Upload Handling
+
+When the user asks Hermes to process an uploaded file, import it first:
+
+```bash
+llm-wiki raw import {root} <uploaded-file> --source-type docs
+```
+
+Then create a source card and use the ingest workflow only for the imported raw source.
 
 ## Safety Rules
 
@@ -109,6 +120,7 @@ llm-wiki index build {root}
 - Write proposed current-state changes to `ai_kb/wiki/current_draft/`.
 - Do not update `ai_kb/wiki/current/` unless the user explicitly confirms.
 - Treat `ai_kb/wiki/indexes/` and `ai_kb/export_for_ai/` as derived outputs.
+- Do daily maintenance checks instead of daily full re-ingest.
 - Cite source paths for important claims.
 """
 
@@ -150,6 +162,7 @@ Profile 名称：
 llm-wiki hermes install-skills --target "{target_root}"
 llm-wiki hermes configure-kb "{root}" --target "{target_root}" --profile "{normalized_profile}"
 llm-wiki lint "{root}"
+llm-wiki maintenance daily "{root}" --dry-run
 ```
 
 如果 profile 已存在，请先停下来告诉我，不要自动覆盖；只有我明确确认后才使用 `--force`。
@@ -160,12 +173,15 @@ llm-wiki lint "{root}"
 - profile 文件路径；
 - `llm-wiki lint` 的结果；
 - 后续我可以如何要求你维护这个知识库。
+- 如何处理“刚上传的文件”。
 
 安全边界：
 
 - 不要修改 `ai_kb/raw/`。
 - 默认只写 `ai_kb/wiki/current_draft/`，不要直接写 `ai_kb/wiki/current/`。
 - `ai_kb/wiki/indexes/` 和 `ai_kb/export_for_ai/` 是派生输出。
+- 每日维护只运行 deterministic maintenance，不要每日全量 re-ingest。
+- 如果用户要求处理刚上传的文件，先用 `llm-wiki raw import` 导入 raw，再只对该 source 准备 ingest。
 - 重要结论必须引用 source path。
 """
 

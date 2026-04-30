@@ -17,6 +17,8 @@ Bundled skills:
 - `lint_knowledge_base`
 - `manage_obsidian_tags`
 - `build_indexes`
+- `import_uploaded_raw_source`
+- `daily_maintenance`
 - `generate_mini_kb`
 - `export_for_ai`
 - `confirm_current`
@@ -62,3 +64,19 @@ This writes:
 ```
 
 Use `--profile <name>` for additional knowledge bases.
+
+## Uploaded Files and Daily Maintenance
+
+For an uploaded file, ask Hermes to use `import_uploaded_raw_source`. The deterministic CLI command is:
+
+```bash
+llm-wiki raw import /path/to/YourKnowledgeBase /path/to/uploaded.md --source-type docs
+```
+
+For daily checks, ask Hermes to use `daily_maintenance`:
+
+```bash
+llm-wiki maintenance daily /path/to/YourKnowledgeBase
+```
+
+Daily maintenance should recommend targeted ingest only when new sources or concrete issues exist.

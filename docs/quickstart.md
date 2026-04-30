@@ -37,6 +37,13 @@ llm-wiki index build ./SimonKnowledgeBase
 llm-wiki lint ./SimonKnowledgeBase
 ```
 
+Import an uploaded file:
+
+```bash
+llm-wiki raw import ./SimonKnowledgeBase ~/Downloads/uploaded.md --source-type docs
+llm-wiki maintenance daily ./SimonKnowledgeBase
+```
+
 Export confirmed current pages:
 
 ```bash

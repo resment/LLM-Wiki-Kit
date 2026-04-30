@@ -15,8 +15,10 @@ runner = CliRunner()
 EXPECTED_SKILLS = {
     "build_indexes",
     "confirm_current",
+    "daily_maintenance",
     "export_for_ai",
     "generate_mini_kb",
+    "import_uploaded_raw_source",
     "ingest_raw_source",
     "lint_knowledge_base",
     "manage_obsidian_tags",
@@ -133,6 +135,8 @@ def test_hermes_bootstrap_prompt_includes_install_configure_and_safety(tmp_path:
     assert "llm-wiki hermes install-skills" in prompt
     assert "llm-wiki hermes configure-kb" in prompt
     assert "llm-wiki lint" in prompt
+    assert "llm-wiki maintenance daily" in prompt
+    assert "llm-wiki raw import" in prompt
     assert str(kb_root.resolve()) in prompt
     assert "work-kb" in prompt
     assert "ai_kb/raw/" in prompt

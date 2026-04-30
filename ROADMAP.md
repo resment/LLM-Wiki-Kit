@@ -1,5 +1,13 @@
 # Roadmap
 
+## v0.2.4 Status
+
+Implemented:
+
+- `llm-wiki raw import` for deterministic uploaded-file import into `ai_kb/raw/`.
+- `llm-wiki maintenance daily` for deterministic daily reports without full re-ingest.
+- Hermes `import_uploaded_raw_source` and `daily_maintenance` skills.
+
 ## v0.2.3 Status
 
 Implemented:

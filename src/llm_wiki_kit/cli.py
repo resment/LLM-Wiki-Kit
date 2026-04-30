@@ -19,9 +19,11 @@ from llm_wiki_kit.hermes import (
 from llm_wiki_kit.indexes import build_indexes
 from llm_wiki_kit.init_kb import InitError, init_knowledge_base
 from llm_wiki_kit.linting import lint_exit_code, lint_json, lint_knowledge_base
+from llm_wiki_kit.maintenance import maintenance_json, maintenance_markdown, run_daily_maintenance
 from llm_wiki_kit.manifest import scan_manifest
 from llm_wiki_kit.mini_kb import create_mini_kb
 from llm_wiki_kit.prompts import render_ingest_prompt, render_lint_ai_prompt, render_tag_prompt
+from llm_wiki_kit.raw_import import RAW_SOURCE_TYPES, import_raw_source
 from llm_wiki_kit.source_card import create_source_card
 from llm_wiki_kit.tags import add_tags_to_file, list_tags, set_tags_in_file
 
@@ -38,6 +40,8 @@ mini_kb_app = typer.Typer(help="Create mini knowledge-base drafts.")
 hermes_app = typer.Typer(help="Install optional Hermes adapter skills.")
 tags_app = typer.Typer(help="Manage Obsidian inline tags.")
 index_app = typer.Typer(help="Build machine-readable indexes.")
+raw_app = typer.Typer(help="Import uploaded raw source files.")
+maintenance_app = typer.Typer(help="Run deterministic maintenance reports.")
 console = Console()
 
 app.add_typer(manifest_app, name="manifest")
@@ -48,6 +52,8 @@ app.add_typer(mini_kb_app, name="mini-kb")
 app.add_typer(hermes_app, name="hermes")
 app.add_typer(tags_app, name="tags")
 app.add_typer(index_app, name="index")
+app.add_typer(raw_app, name="raw")
+app.add_typer(maintenance_app, name="maintenance")
 
 
 def _version_callback(value: bool) -> None:
@@ -410,3 +416,54 @@ def index_build(
     console.print(f"[green]{action}[/green] indexes")
     for name, path in result.files.items():
         console.print(f"{name}: {path}")
+
+
+@raw_app.command("import")
+def raw_import_command(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    file_path: Annotated[Path, typer.Argument(help="Uploaded file to import.")],
+    source_type: Annotated[
+        str,
+        typer.Option(
+            "--source-type",
+            help="Raw source type: docs, meetings, chats, web_clips, data.",
+        ),
+    ] = "docs",
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing.")] = False,
+    force: Annotated[bool, typer.Option("--force", help="Overwrite an existing raw file.")] = False,
+) -> None:
+    """Import an uploaded file into ai_kb/raw."""
+
+    if source_type not in RAW_SOURCE_TYPES:
+        console.print(
+            f"[red]Error:[/red] --source-type must be one of: {', '.join(RAW_SOURCE_TYPES)}"
+        )
+        raise typer.Exit(code=2)
+    try:
+        result = import_raw_source(
+            kb_root,
+            file_path,
+            source_type=source_type,
+            dry_run=dry_run,
+            force=force,
+        )
+    except (FileExistsError, FileNotFoundError, ValueError) as error:
+        console.print(f"[red]Error:[/red] {error}")
+        raise typer.Exit(code=1) from error
+    action = "Would import" if dry_run else "Imported"
+    console.print(f"[green]{action}[/green] {result.relative_destination}")
+
+
+@maintenance_app.command("daily")
+def maintenance_daily_command(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    json_output: Annotated[bool, typer.Option("--json", help="Print JSON output.")] = False,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing.")] = False,
+) -> None:
+    """Run deterministic daily maintenance checks."""
+
+    report = run_daily_maintenance(kb_root, dry_run=dry_run)
+    if json_output:
+        console.out(maintenance_json(report))
+    else:
+        console.print(maintenance_markdown(report))

@@ -12,6 +12,8 @@ hermes/
 │  ├─ lint_knowledge_base/
 │  ├─ manage_obsidian_tags/
 │  ├─ build_indexes/
+│  ├─ import_uploaded_raw_source/
+│  ├─ daily_maintenance/
 │  ├─ generate_mini_kb/
 │  ├─ export_for_ai/
 │  └─ confirm_current/
@@ -90,6 +92,28 @@ llm-wiki hermes bootstrap-prompt /path/to/YourKnowledgeBase
 
 Paste the output into Hermes Agent. The prompt instructs Hermes to install skills, configure the
 default profile, run lint, and report what changed.
+
+## Uploaded File Workflow
+
+When a user uploads a file through Hermes gateway, first import it into raw:
+
+```bash
+llm-wiki raw import /path/to/YourKnowledgeBase /path/to/uploaded.md --source-type docs
+```
+
+Then create a source card and ingest only that imported raw source. Do not run a full re-ingest.
+
+## Daily Maintenance
+
+Daily maintenance is deterministic:
+
+```bash
+llm-wiki maintenance daily /path/to/YourKnowledgeBase
+```
+
+The report identifies new raw sources, missing source cards, lint findings, and recommended actions.
+Use Hermes' already configured LLM environment only when the report recommends a targeted ingest or
+semantic wiki update.
 
 ## Shell Install
 

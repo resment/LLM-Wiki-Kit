@@ -9,7 +9,7 @@ It is not a normal note template and it is not a RAG system. The project separat
 
 ## Status
 
-v0.2.3 provides deterministic scaffolding, initialization, manifest scanning,
+v0.2.4 provides deterministic scaffolding, initialization, manifest scanning,
 source-card templates, prompt rendering, linting, current export, mini-kb draft generation,
 optional Hermes skills, Obsidian-friendly Markdown tags, machine-readable indexes, and
 stronger consistency checks. It does not call an LLM API by default.
@@ -41,7 +41,7 @@ archive/               Archived material.
 
 ## CLI
 
-v0.2.3 supports:
+v0.2.4 supports:
 
 ```bash
 llm-wiki init ./SimonKnowledgeBase
@@ -54,6 +54,8 @@ llm-wiki tags list ./SimonKnowledgeBase/ai_kb/wiki/projects/example.md
 llm-wiki tags add ./SimonKnowledgeBase/ai_kb/wiki/projects/example.md --tag project/example
 llm-wiki tags set ./SimonKnowledgeBase/ai_kb/wiki/projects/example.md --tag status/draft
 llm-wiki index build ./SimonKnowledgeBase
+llm-wiki raw import ./SimonKnowledgeBase ~/Downloads/uploaded.md --source-type docs
+llm-wiki maintenance daily ./SimonKnowledgeBase
 llm-wiki prompt lint-ai ./SimonKnowledgeBase
 llm-wiki lint ./SimonKnowledgeBase
 llm-wiki export current ./SimonKnowledgeBase
@@ -69,6 +71,7 @@ the deterministic CLI safety model. v0.2.1 includes Hermes tags/index skills for
 `llm-wiki tags` and `llm-wiki index build` workflows. v0.2.2 adds `configure-kb` so Hermes can
 remember a default knowledge-base path through a local profile. v0.2.3 adds `bootstrap-prompt` so
 users can paste a natural-language installation request into Hermes Agent.
+v0.2.4 adds uploaded-file raw import and daily deterministic maintenance reports.
 
 ## Obsidian Tags and Indexes
 
@@ -83,6 +86,24 @@ users can paste a natural-language installation request into Hermes Agent.
 Tags are normalized to lowercase kebab-case and may use namespaces such as `#project/...`,
 `#capability/...`, and `#status/...`. The CLI refuses to write tags into `ai_kb/raw/`; raw sources
 remain immutable. `llm-wiki index build` writes JSON indexes under `ai_kb/wiki/indexes/` for tools.
+
+## Uploads and Maintenance
+
+For files uploaded through Hermes gateway or another chat surface, import the file into raw first:
+
+```bash
+llm-wiki raw import ./SimonKnowledgeBase ~/Downloads/uploaded.md --source-type docs
+```
+
+Daily maintenance should not re-ingest everything. Run:
+
+```bash
+llm-wiki maintenance daily ./SimonKnowledgeBase
+```
+
+The report identifies new raw sources, missing source cards, lint issues, and recommended actions.
+LLM compilation remains the responsibility of the user's configured Agent environment, such as
+Hermes.
 
 ## Safety Boundaries
 
@@ -103,8 +124,8 @@ This project is not OSI open source because commercial use is reserved.
 
 ## Hermes and Codex
 
-Hermes integration is optional and lives under `hermes/`. It includes skills for ingest, lint,
-mini-kb, export, current confirmation, tags, and indexes. Codex maintenance rules live in
+Hermes integration is optional and lives under `hermes/`. It includes skills for upload import,
+daily maintenance, ingest, lint, mini-kb, export, current confirmation, tags, and indexes. Codex maintenance rules live in
 `AGENTS.md` and generated knowledge bases receive their own `AGENTS.md` and `ai_kb/schema/AGENTS.md`.
 
 After installing Hermes skills, bind your default knowledge base:
