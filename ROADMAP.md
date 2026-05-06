@@ -1,5 +1,14 @@
 # Roadmap
 
+## v0.3.0 Status
+
+Implemented:
+
+- `.llm-wiki/agent_access.yaml` for per-knowledge-base Agent access policy.
+- `llm-wiki agents wizard/status/configure/set/policy` for read/write Agent setup.
+- Claude Desktop read-only MCP adapter through `llm-wiki mcp serve`.
+- `llm-wiki claude-desktop config/status` for first-use setup and verification.
+
 ## v0.2.5 Status
 
 Implemented:
@@ -70,6 +79,7 @@ Commercial use requires a separate written commercial license.
 - Add more example knowledge-base shapes outside product knowledge operations.
 - Add optional richer Obsidian graph conventions without requiring an Obsidian plugin.
 - Add source-card/current consistency reports beyond lint output.
+- Package Claude Desktop as a Desktop Extension after MCP dogfooding.
 
 ## Non-Goals for v0.1
 
@@ -77,4 +87,4 @@ Commercial use requires a separate written commercial license.
 - No vector database.
 - No Web UI.
 - No Obsidian plugin.
-- No multi-user permission model.
+- No OS-level permission model.

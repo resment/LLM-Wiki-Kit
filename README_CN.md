@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-v0.2.5 提供确定性的项目脚手架、初始化命令、manifest 扫描、source card 模板、prompt 渲染、lint、current 导出、mini-kb 草稿、可选 Hermes skills、Obsidian 友好的 Markdown tags、机器可读索引、上传文档导入、每日维护报告、doctor 和 Hermes status 诊断。默认不调用任何 LLM API。
+v0.3.0 提供确定性的项目脚手架、初始化命令、manifest 扫描、source card 模板、prompt 渲染、lint、current 导出、mini-kb 草稿、可选 Hermes skills、Obsidian 友好的 Markdown tags、机器可读索引、上传文档导入、每日维护报告、doctor、Hermes status、多 Agent 访问策略和 Claude Desktop 只读 MCP adapter。默认不调用任何 LLM API。
 
 ## 快速开始
 
@@ -31,7 +31,7 @@ archive/               归档资料。
 
 ## CLI
 
-v0.2.5 支持：
+v0.3.0 支持：
 
 ```bash
 llm-wiki init ./SimonKnowledgeBase
@@ -47,6 +47,11 @@ llm-wiki index build ./SimonKnowledgeBase
 llm-wiki raw import ./SimonKnowledgeBase ~/Downloads/uploaded.md --source-type docs
 llm-wiki maintenance daily ./SimonKnowledgeBase
 llm-wiki doctor ./SimonKnowledgeBase
+llm-wiki agents wizard ./SimonKnowledgeBase
+llm-wiki agents status ./SimonKnowledgeBase
+llm-wiki claude-desktop config ./SimonKnowledgeBase
+llm-wiki claude-desktop status ./SimonKnowledgeBase
+llm-wiki mcp serve --agent claude-desktop --kb-root ./SimonKnowledgeBase
 llm-wiki prompt lint-ai ./SimonKnowledgeBase
 llm-wiki lint ./SimonKnowledgeBase
 llm-wiki export current ./SimonKnowledgeBase
@@ -64,10 +69,31 @@ python scripts/validate_example.py
 
 ```bash
 llm-wiki doctor ./SimonKnowledgeBase
+llm-wiki agents wizard ./SimonKnowledgeBase
 llm-wiki hermes status
 ```
 
 `doctor` 检查知识库结构和确定性健康状态。`hermes status` 检查 skills、profiles 和默认知识库路径是否有效。
+
+## 多 Agent 访问策略
+
+默认使用一个主读写 Agent，其他 Agent 只读：
+
+```bash
+llm-wiki agents wizard ./SimonKnowledgeBase
+llm-wiki agents status ./SimonKnowledgeBase
+```
+
+策略写入知识库内部的 `.llm-wiki/agent_access.yaml`。常见配置是 Hermes 或 Codex 作为写入者，Claude Desktop 和 OpenClaw 只读。Claude Desktop 默认使用 `wiki_context`，可读取 confirmed/current wiki context、source cards、manifest、portfolio pages 和 indexes，但不读取 raw sources、current drafts、human notes 或 archive。
+
+Claude Desktop 接入：
+
+```bash
+llm-wiki claude-desktop config ./SimonKnowledgeBase
+llm-wiki claude-desktop status ./SimonKnowledgeBase
+```
+
+把生成的 MCP 片段加入 Claude Desktop 配置后重启应用。只读边界只适用于 llm-wiki-kit 提供的 MCP adapter；如果额外给 Claude Desktop 配置了 filesystem 或 shell 写权限，那些外部工具不受本项目强制约束。
 
 ## Obsidian Tags 与索引
 

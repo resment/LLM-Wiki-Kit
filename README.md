@@ -9,11 +9,11 @@ It is not a normal note template and it is not a RAG system. The project separat
 
 ## Status
 
-v0.2.5 provides deterministic scaffolding, initialization, manifest scanning,
+v0.3.0 provides deterministic scaffolding, initialization, manifest scanning,
 source-card templates, prompt rendering, linting, current export, mini-kb draft generation,
 optional Hermes skills, Obsidian-friendly Markdown tags, machine-readable indexes, and
-stronger consistency checks. It also includes doctor and Hermes status diagnostics. It does not call
-an LLM API by default.
+stronger consistency checks. It also includes doctor diagnostics, Hermes status, multi-agent access
+profiles, and a Claude Desktop read-only MCP adapter. It does not call an LLM API by default.
 
 ## Quick Start
 
@@ -42,7 +42,7 @@ archive/               Archived material.
 
 ## CLI
 
-v0.2.5 supports:
+v0.3.0 supports:
 
 ```bash
 llm-wiki init ./SimonKnowledgeBase
@@ -58,6 +58,11 @@ llm-wiki index build ./SimonKnowledgeBase
 llm-wiki raw import ./SimonKnowledgeBase ~/Downloads/uploaded.md --source-type docs
 llm-wiki maintenance daily ./SimonKnowledgeBase
 llm-wiki doctor ./SimonKnowledgeBase
+llm-wiki agents wizard ./SimonKnowledgeBase
+llm-wiki agents status ./SimonKnowledgeBase
+llm-wiki claude-desktop config ./SimonKnowledgeBase
+llm-wiki claude-desktop status ./SimonKnowledgeBase
+llm-wiki mcp serve --agent claude-desktop --kb-root ./SimonKnowledgeBase
 llm-wiki prompt lint-ai ./SimonKnowledgeBase
 llm-wiki lint ./SimonKnowledgeBase
 llm-wiki export current ./SimonKnowledgeBase
@@ -76,6 +81,7 @@ remember a default knowledge-base path through a local profile. v0.2.3 adds `boo
 users can paste a natural-language installation request into Hermes Agent.
 v0.2.4 adds uploaded-file raw import and daily deterministic maintenance reports.
 v0.2.5 adds `doctor` and `hermes status` for installation and pre-use diagnostics.
+v0.3.0 adds `.llm-wiki/agent_access.yaml`, `agents wizard`, and Claude Desktop read-only MCP.
 
 ## Verify Installation
 
@@ -83,11 +89,37 @@ After init or Hermes setup, run:
 
 ```bash
 llm-wiki doctor ./SimonKnowledgeBase
+llm-wiki agents wizard ./SimonKnowledgeBase
 llm-wiki hermes status
 ```
 
 `doctor` checks the knowledge-base layout and deterministic health. `hermes status` checks installed
 skills, profiles, and whether the configured knowledge-base path is valid.
+
+## Multi-Agent Access
+
+Use one primary read/write agent and keep other agents read-only by default:
+
+```bash
+llm-wiki agents wizard ./SimonKnowledgeBase
+llm-wiki agents status ./SimonKnowledgeBase
+```
+
+The policy is stored inside the knowledge base at `.llm-wiki/agent_access.yaml`. A typical setup is
+Hermes or Codex as the writer, with Claude Desktop and OpenClaw as readers. Claude Desktop defaults
+to `wiki_context`, which reads confirmed/current wiki context, source cards, manifest, portfolio
+pages, and indexes, but not raw sources, current drafts, human notes, or archives.
+
+For Claude Desktop:
+
+```bash
+llm-wiki claude-desktop config ./SimonKnowledgeBase
+llm-wiki claude-desktop status ./SimonKnowledgeBase
+```
+
+Add the generated MCP snippet to Claude Desktop and restart the app. The read-only boundary applies
+to the llm-wiki-kit MCP adapter; separately granted filesystem or shell tools are outside this
+project's enforcement boundary.
 
 ## Obsidian Tags and Indexes
 
