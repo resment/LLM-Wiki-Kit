@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-v0.3.1 提供确定性的项目脚手架、初始化命令、manifest 扫描、source card 模板、prompt 渲染、lint、current 导出、mini-kb 草稿、可选 Hermes skills、Obsidian 友好的 Markdown tags、机器可读索引、上传文档导入、每日维护报告、doctor、Hermes status、多 Agent 访问策略和 Claude Desktop 只读 MCP adapter。默认不调用任何 LLM API。
+v0.3.2 提供确定性的项目脚手架、初始化命令、manifest 扫描、source card 模板、prompt 渲染、lint、current 导出、mini-kb 草稿、可选 Hermes skills、Obsidian 友好的 Markdown tags、机器可读索引、上传文档导入、每日维护报告、doctor、Hermes status、多 Agent 访问策略和 Claude Desktop 只读 MCP adapter。默认不调用任何 LLM API。
 
 ## 快速开始
 
@@ -31,7 +31,7 @@ archive/               归档资料。
 
 ## CLI
 
-v0.3.1 支持：
+v0.3.2 支持：
 
 ```bash
 linta init ./SimonKnowledgeBase
@@ -47,6 +47,7 @@ linta index build ./SimonKnowledgeBase
 linta raw import ./SimonKnowledgeBase ~/Downloads/uploaded.md --source-type docs
 linta maintenance daily ./SimonKnowledgeBase
 linta doctor ./SimonKnowledgeBase
+linta migrate ./SimonKnowledgeBase --dry-run
 linta agents wizard ./SimonKnowledgeBase
 linta agents status ./SimonKnowledgeBase
 linta claude-desktop config ./SimonKnowledgeBase
@@ -74,6 +75,17 @@ linta hermes status
 ```
 
 `doctor` 检查知识库结构和确定性健康状态。`hermes status` 检查 skills、profiles 和默认知识库路径是否有效。
+
+## 改名迁移
+
+从旧名称升级到 Linta 后运行：
+
+```bash
+linta migrate ./SimonKnowledgeBase --dry-run
+linta migrate ./SimonKnowledgeBase
+```
+
+迁移会在需要时把旧 `.llm-wiki/agent_access.yaml` 复制到 `.linta/agent_access.yaml`，把旧 `llm-wiki-tags` block 替换为 `linta-tags`，并报告旧 Hermes skills 目录。
 
 ## 多 Agent 访问策略
 

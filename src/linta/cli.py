@@ -39,6 +39,7 @@ from linta.linting import lint_exit_code, lint_json, lint_knowledge_base
 from linta.maintenance import maintenance_json, maintenance_markdown, run_daily_maintenance
 from linta.manifest import scan_manifest
 from linta.mcp_server import serve_mcp_stdio
+from linta.migration import migration_json, migration_markdown, run_rename_migration
 from linta.mini_kb import create_mini_kb
 from linta.prompts import render_ingest_prompt, render_lint_ai_prompt, render_tag_prompt
 from linta.raw_import import RAW_SOURCE_TYPES, import_raw_source
@@ -181,6 +182,21 @@ def doctor_command(
         console.out(doctor_json(report))
     else:
         console.print(doctor_markdown(report))
+
+
+@app.command("migrate")
+def migrate_command(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview without writing.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Print JSON output.")] = False,
+) -> None:
+    """Migrate legacy llm-wiki rename-era files to Linta names."""
+
+    report = run_rename_migration(kb_root, dry_run=dry_run)
+    if json_output:
+        console.out(migration_json(report))
+    else:
+        console.print(migration_markdown(report))
 
 
 @manifest_app.command("scan")

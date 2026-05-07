@@ -9,7 +9,7 @@ It is not a normal note template and it is not a RAG system. The project separat
 
 ## Status
 
-v0.3.1 provides deterministic scaffolding, initialization, manifest scanning,
+v0.3.2 provides deterministic scaffolding, initialization, manifest scanning,
 source-card templates, prompt rendering, linting, current export, mini-kb draft generation,
 optional Hermes skills, Obsidian-friendly Markdown tags, machine-readable indexes, and
 stronger consistency checks. It also includes doctor diagnostics, Hermes status, multi-agent access
@@ -42,7 +42,7 @@ archive/               Archived material.
 
 ## CLI
 
-v0.3.1 supports:
+v0.3.2 supports:
 
 ```bash
 linta init ./SimonKnowledgeBase
@@ -58,6 +58,7 @@ linta index build ./SimonKnowledgeBase
 linta raw import ./SimonKnowledgeBase ~/Downloads/uploaded.md --source-type docs
 linta maintenance daily ./SimonKnowledgeBase
 linta doctor ./SimonKnowledgeBase
+linta migrate ./SimonKnowledgeBase --dry-run
 linta agents wizard ./SimonKnowledgeBase
 linta agents status ./SimonKnowledgeBase
 linta claude-desktop config ./SimonKnowledgeBase
@@ -81,7 +82,9 @@ remember a default knowledge-base path through a local profile. v0.2.3 adds `boo
 users can paste a natural-language installation request into Hermes Agent.
 v0.2.4 adds uploaded-file raw import and daily deterministic maintenance reports.
 v0.2.5 adds `doctor` and `hermes status` for installation and pre-use diagnostics.
-v0.3.1 adds `.linta/agent_access.yaml`, `agents wizard`, and Claude Desktop read-only MCP.
+v0.3.0 adds `.linta/agent_access.yaml`, `agents wizard`, and Claude Desktop read-only MCP.
+v0.3.1 renames the project to Linta / 灵台.
+v0.3.2 adds rename migration hardening through `linta migrate`.
 
 ## Verify Installation
 
@@ -95,6 +98,18 @@ linta hermes status
 
 `doctor` checks the knowledge-base layout and deterministic health. `hermes status` checks installed
 skills, profiles, and whether the configured knowledge-base path is valid.
+
+## Rename Migration
+
+After upgrading from the pre-Linta name, run:
+
+```bash
+linta migrate ./SimonKnowledgeBase --dry-run
+linta migrate ./SimonKnowledgeBase
+```
+
+The migration copies legacy `.llm-wiki/agent_access.yaml` to `.linta/agent_access.yaml` when needed,
+replaces legacy `llm-wiki-tags` blocks with `linta-tags`, and reports old Hermes skill directories.
 
 ## Multi-Agent Access
 

@@ -1,6 +1,6 @@
 # Claude Desktop Read-Only MCP
 
-v0.3.1 adds a read-only Claude Desktop adapter through MCP. Claude Desktop uses its own LLM
+v0.3.0 adds a read-only Claude Desktop adapter through MCP. Claude Desktop uses its own LLM
 configuration; Linta only exposes deterministic read tools.
 
 ## Configure Agent Access

@@ -8,7 +8,11 @@ from pathlib import Path
 from typing import Any
 
 from linta import __version__
-from linta.agent_access import existing_access_config_path
+from linta.agent_access import (
+    access_config_path,
+    existing_access_config_path,
+    legacy_access_config_path,
+)
 from linta.linting import lint_knowledge_base
 from linta.manifest import manifest_source_paths
 from linta.source_card import source_card_path
@@ -83,6 +87,18 @@ def run_doctor(kb_root: Path) -> DoctorReport:
                 "Agent access policy exists.",
             )
         )
+        if (
+            agent_access_path == legacy_access_config_path(root)
+            and not access_config_path(root).exists()
+        ):
+            checks.append(
+                DoctorCheck(
+                    "warning",
+                    "legacy-agent-access",
+                    ".llm-wiki/agent_access.yaml",
+                    "Run linta migrate to copy this policy to .linta/agent_access.yaml.",
+                )
+            )
     else:
         checks.append(
             DoctorCheck(

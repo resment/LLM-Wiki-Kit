@@ -1,5 +1,15 @@
 # Roadmap
 
+## v0.3.2 Status
+
+Implemented:
+
+- `linta migrate <kb_root>` for safe rename-era migration.
+- Dry-run and JSON migration report output.
+- Legacy `.llm-wiki/agent_access.yaml` copy to `.linta/agent_access.yaml`.
+- Legacy `llm-wiki-tags` block replacement with `linta-tags`.
+- Doctor warning for legacy access-policy paths.
+
 ## v0.3.1 Status
 
 Implemented:

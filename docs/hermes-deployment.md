@@ -81,7 +81,7 @@ linta hermes status --target /tmp/hermes-skills/linta
 
 ## Knowledge Base Profiles
 
-v0.3.1 adds KB-local Agent access policy:
+v0.3.0 adds KB-local Agent access policy:
 
 ```bash
 linta agents configure /path/to/YourKnowledgeBase --primary-agent hermes
