@@ -9,6 +9,7 @@ from typing import Any
 
 from linta.agent_access import read_agent_policy
 from linta.doctor import run_doctor
+from linta.mcp_server import PRACTICAL_CONTEXT_TOOLS
 
 
 @dataclass(frozen=True)
@@ -17,6 +18,8 @@ class ClaudeDesktopStatus:
     policy_mode: str
     read_scope: str
     kb_ok: bool
+    practical_context_tools: list[str]
+    warnings: list[str]
     message: str
 
     def to_dict(self) -> dict[str, Any]:
@@ -25,6 +28,8 @@ class ClaudeDesktopStatus:
             "policy_mode": self.policy_mode,
             "read_scope": self.read_scope,
             "kb_ok": self.kb_ok,
+            "practical_context_tools": self.practical_context_tools,
+            "warnings": self.warnings,
             "message": self.message,
         }
 
@@ -54,11 +59,22 @@ def inspect_claude_desktop_status(kb_root: Path) -> ClaudeDesktopStatus:
     policy = read_agent_policy(root, "claude-desktop")
     doctor = run_doctor(root)
     ok = doctor.to_dict()["ok"]
+    warnings = []
+    if policy.read_scope != "wiki_context":
+        warnings.append(
+            "Claude Desktop practical context is designed for wiki_context; raw sources remain "
+            "excluded from practical context tools."
+        )
+    indexes_root = root / "ai_kb/wiki/indexes"
+    if not indexes_root.exists() or not any(indexes_root.glob("*.json")):
+        warnings.append("Indexes are missing; run linta index build <kb_root>.")
     return ClaudeDesktopStatus(
         kb_root=root,
         policy_mode=policy.mode,
         read_scope=policy.read_scope,
         kb_ok=ok,
+        practical_context_tools=list(PRACTICAL_CONTEXT_TOOLS),
+        warnings=warnings,
         message=(
             "Claude Desktop can use the read-only MCP adapter."
             if policy.mode == "read"

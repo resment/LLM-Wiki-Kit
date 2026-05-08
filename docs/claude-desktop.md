@@ -3,6 +3,9 @@
 v0.3.0 adds a read-only Claude Desktop adapter through MCP. Claude Desktop uses its own LLM
 configuration; Linta only exposes deterministic read tools.
 
+v0.3.3 adds practical context tools so Claude Desktop can discover, search, read, and bundle
+compiled Linta context inside a Claude Project without reading raw source material.
+
 ## Configure Agent Access
 
 Create an access policy inside the knowledge base:
@@ -58,7 +61,26 @@ linta agents set /path/to/YourKnowledgeBase \
   --read-scope exports-only
 ```
 
-Use `full-kb` only when Claude Desktop should be able to read raw sources as well.
+Use `full-kb` only for lower-level MCP tools when Claude Desktop should be able to read raw sources
+as well. The practical context tools still exclude raw sources so Claude Project work stays on the
+compiled wiki layer.
+
+## Claude Project Workflow
+
+In a Claude Project, ask Claude to use the Linta MCP tools in this order:
+
+```text
+Use the Linta MCP server. Start with context_overview, then use context_search,
+context_read, and context_bundle to decide which compiled wiki context is relevant.
+Do not ask for raw sources.
+```
+
+The practical tools are:
+
+- `context_overview`: shows available compiled context entrypoints and the read boundary.
+- `context_search`: searches allowed compiled context and returns paths, lines, and snippets.
+- `context_read`: reads one allowed context file.
+- `context_bundle`: builds a compact package from a query or explicit paths.
 
 ## Status Checks
 

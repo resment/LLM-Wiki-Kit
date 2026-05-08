@@ -9,6 +9,8 @@ from typing import Any
 
 from linta import __version__
 from linta.agent_access import (
+    WIKI_CONTEXT_PATHS,
+    AgentPolicy,
     agent_access_json,
     is_read_allowed,
     list_allowed_context_files,
@@ -26,7 +28,22 @@ READ_ONLY_TOOLS = (
     "read_indexes",
     "read_manifest",
     "read_source_card",
+    "context_overview",
+    "context_search",
+    "context_read",
+    "context_bundle",
 )
+
+PRACTICAL_CONTEXT_TOOLS = (
+    "context_overview",
+    "context_search",
+    "context_read",
+    "context_bundle",
+)
+
+PRACTICAL_CONTEXT_POLICY = AgentPolicy(mode="read", read_scope="wiki_context")
+CONTEXT_BUNDLE_DEFAULT_LIMIT = 8
+CONTEXT_BUNDLE_MAX_LIMIT = 20
 
 
 class McpError(Exception):
@@ -76,6 +93,35 @@ class ReadOnlyMcpServer:
                 {"path": {"type": "string"}},
                 required=["path"],
             ),
+            _tool(
+                "context_overview",
+                "Summarize the practical Claude-readable Linta context surface.",
+                {},
+            ),
+            _tool(
+                "context_search",
+                "Search practical Linta context without reading raw sources.",
+                {
+                    "query": {"type": "string"},
+                    "limit": {"type": "integer", "minimum": 1, "maximum": CONTEXT_BUNDLE_MAX_LIMIT},
+                },
+                required=["query"],
+            ),
+            _tool(
+                "context_read",
+                "Read one practical Linta context file; raw sources are always denied.",
+                {"path": {"type": "string"}},
+                required=["path"],
+            ),
+            _tool(
+                "context_bundle",
+                "Build a practical context package from a query or explicit context paths.",
+                {
+                    "query": {"type": "string"},
+                    "paths": {"type": "array", "items": {"type": "string"}},
+                    "limit": {"type": "integer", "minimum": 1, "maximum": CONTEXT_BUNDLE_MAX_LIMIT},
+                },
+            ),
         ]
 
     def call_tool(self, name: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -98,6 +144,27 @@ class ReadOnlyMcpServer:
             return _text_result(self._read_allowed("ai_kb/wiki/source_manifest.md"))
         if name == "read_source_card":
             return _text_result(self._read_source_card(str(args.get("path") or "")))
+        if name == "context_overview":
+            return _json_result(self._context_overview())
+        if name == "context_search":
+            return _json_result(
+                {
+                    "matches": self._context_search(
+                        str(args.get("query") or ""),
+                        limit=_limit(args.get("limit")),
+                    )
+                }
+            )
+        if name == "context_read":
+            return _text_result(self._read_practical_context(str(args.get("path") or "")))
+        if name == "context_bundle":
+            return _json_result(
+                self._context_bundle(
+                    query=str(args.get("query") or ""),
+                    paths=args.get("paths"),
+                    limit=_limit(args.get("limit")),
+                )
+            )
         raise McpError(f"Unhandled tool: {name}")
 
     def handle_request(self, request: dict[str, Any]) -> dict[str, Any] | None:
@@ -153,6 +220,145 @@ class ReadOnlyMcpServer:
             if lines:
                 matches.append({"path": relative, "matches": lines[:20]})
         return matches
+
+    def _context_overview(self) -> dict[str, Any]:
+        files = self._practical_context_files()
+        return {
+            "kb_root": self.kb_root.as_posix(),
+            "agent": self.agent,
+            "boundary": (
+                "Practical context tools read compiled wiki context only. "
+                "They do not read ai_kb/raw, human, archive, or current_draft."
+            ),
+            "policy": self.policy.to_dict(),
+            "practical_tools": list(PRACTICAL_CONTEXT_TOOLS),
+            "entrypoints": {
+                "current": self._path_status("ai_kb/wiki/current"),
+                "portfolio": self._path_status("ai_kb/wiki/portfolio"),
+                "manifest": self._path_status("ai_kb/wiki/source_manifest.md"),
+                "source_cards": self._path_status("ai_kb/wiki/source_cards"),
+                "indexes": self._path_status("ai_kb/wiki/indexes"),
+            },
+            "files": files,
+        }
+
+    def _context_search(self, query: str, *, limit: int) -> list[dict[str, Any]]:
+        if not query:
+            raise McpError("Query must not be empty.")
+        matches: list[dict[str, Any]] = []
+        for relative in self._practical_context_files():
+            path = self.kb_root / relative
+            text = path.read_text(encoding="utf-8")
+            for index, line in enumerate(text.splitlines(), start=1):
+                if query.lower() not in line.lower():
+                    continue
+                matches.append(
+                    {
+                        "path": relative,
+                        "content_type": _content_type(relative),
+                        "line": index,
+                        "snippet": line.strip(),
+                    }
+                )
+                if len(matches) >= limit:
+                    return matches
+        return matches
+
+    def _context_bundle(
+        self,
+        *,
+        query: str,
+        paths: object,
+        limit: int,
+    ) -> dict[str, Any]:
+        selected = _string_list(paths)
+        if not selected and query:
+            selected = _unique(
+                [match["path"] for match in self._context_search(query, limit=limit)]
+            )
+        if not selected:
+            selected = self._default_context_entrypoints(limit=limit)
+        selected = selected[:limit]
+        files = []
+        for relative in selected:
+            text = self._read_practical_context(relative)
+            files.append(
+                {
+                    "path": relative,
+                    "content_type": _content_type(relative),
+                    "text": text,
+                }
+            )
+        return {
+            "kb_root": self.kb_root.as_posix(),
+            "query": query,
+            "boundary": (
+                "This bundle contains compiled Linta context only. Raw sources are excluded."
+            ),
+            "files": files,
+            "source_cards": [
+                path for path in selected if path.startswith("ai_kb/wiki/source_cards/")
+            ],
+            "indexes": [path for path in selected if path.startswith("ai_kb/wiki/indexes/")],
+        }
+
+    def _default_context_entrypoints(self, *, limit: int) -> list[str]:
+        preferred = (
+            "README.md",
+            "AGENTS.md",
+            "ai_kb/schema/AGENTS.md",
+            "ai_kb/wiki/source_manifest.md",
+        )
+        files = self._practical_context_files()
+        selected = [path for path in preferred if path in files]
+        for path in files:
+            if path not in selected:
+                selected.append(path)
+            if len(selected) >= limit:
+                break
+        return selected
+
+    def _read_practical_context(self, relative_path: str) -> str:
+        path = (self.kb_root / relative_path).resolve()
+        if not self._is_practical_context_allowed(path):
+            raise McpError(f"Practical context read not allowed: {relative_path}")
+        if not path.is_file():
+            raise McpError(f"File does not exist: {relative_path}")
+        return path.read_text(encoding="utf-8")
+
+    def _practical_context_files(self) -> list[str]:
+        files: set[str] = set()
+        for relative in WIKI_CONTEXT_PATHS:
+            path = (self.kb_root / relative).resolve()
+            if path.is_file() and self._is_practical_context_allowed(path):
+                files.add(path.relative_to(self.kb_root).as_posix())
+            elif path.is_dir():
+                for child in path.rglob("*"):
+                    if child.is_file() and self._is_practical_context_allowed(child):
+                        files.add(child.relative_to(self.kb_root).as_posix())
+        return sorted(files)
+
+    def _is_practical_context_allowed(self, path: Path) -> bool:
+        return is_read_allowed(
+            self.kb_root,
+            self.policy,
+            path,
+        ) and is_read_allowed(self.kb_root, PRACTICAL_CONTEXT_POLICY, path)
+
+    def _path_status(self, relative_path: str) -> dict[str, Any]:
+        path = self.kb_root / relative_path
+        allowed = self._is_practical_context_allowed(path.resolve())
+        if path.is_file():
+            count = 1
+        elif path.is_dir():
+            count = sum(
+                1
+                for child in path.rglob("*")
+                if child.is_file() and self._is_practical_context_allowed(child)
+            )
+        else:
+            count = 0
+        return {"exists": path.exists(), "allowed": allowed, "file_count": count}
 
     def _read_directory_json(self, relative_directory: str) -> dict[str, Any]:
         directory = (self.kb_root / relative_directory).resolve()
@@ -233,3 +439,44 @@ def _text_result(text: str) -> dict[str, Any]:
 
 def _json_result(value: dict[str, Any]) -> dict[str, Any]:
     return _text_result(json.dumps(value, indent=2) + "\n")
+
+
+def _limit(value: object) -> int:
+    try:
+        raw = int(value) if value is not None else CONTEXT_BUNDLE_DEFAULT_LIMIT
+    except (TypeError, ValueError):
+        raw = CONTEXT_BUNDLE_DEFAULT_LIMIT
+    return max(1, min(raw, CONTEXT_BUNDLE_MAX_LIMIT))
+
+
+def _string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if str(item).strip()]
+
+
+def _unique(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
+
+
+def _content_type(relative_path: str) -> str:
+    if relative_path.startswith("ai_kb/wiki/current/"):
+        return "current"
+    if relative_path.startswith("ai_kb/wiki/portfolio/"):
+        return "portfolio"
+    if relative_path.startswith("ai_kb/wiki/source_cards/"):
+        return "source_card"
+    if relative_path.startswith("ai_kb/wiki/indexes/"):
+        return "index"
+    if relative_path == "ai_kb/wiki/source_manifest.md":
+        return "manifest"
+    if relative_path.startswith("ai_kb/schema/"):
+        return "schema"
+    return "wiki_context"

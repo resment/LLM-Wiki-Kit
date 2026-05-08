@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-v0.3.2 提供确定性的项目脚手架、初始化命令、manifest 扫描、source card 模板、prompt 渲染、lint、current 导出、mini-kb 草稿、可选 Hermes skills、Obsidian 友好的 Markdown tags、机器可读索引、上传文档导入、每日维护报告、doctor、Hermes status、多 Agent 访问策略和 Claude Desktop 只读 MCP adapter。默认不调用任何 LLM API。
+v0.3.3 提供确定性的项目脚手架、初始化命令、manifest 扫描、source card 模板、prompt 渲染、lint、current 导出、mini-kb 草稿、可选 Hermes skills、Obsidian 友好的 Markdown tags、机器可读索引、上传文档导入、每日维护报告、doctor、Hermes status、多 Agent 访问策略和带 practical context tools 的 Claude Desktop 只读 MCP adapter。默认不调用任何 LLM API。
 
 ## 快速开始
 
@@ -31,7 +31,7 @@ archive/               归档资料。
 
 ## CLI
 
-v0.3.2 支持：
+v0.3.3 支持：
 
 ```bash
 linta init ./SimonKnowledgeBase
@@ -106,6 +106,10 @@ linta claude-desktop status ./SimonKnowledgeBase
 ```
 
 把生成的 MCP 片段加入 Claude Desktop 配置后重启应用。只读边界只适用于 Linta 提供的 MCP adapter；如果额外给 Claude Desktop 配置了 filesystem 或 shell 写权限，那些外部工具不受本项目强制约束。
+
+Claude Desktop 推荐先调用 `context_overview`，再用 `context_search`、`context_read` 和
+`context_bundle` 自行选择相关的已整理 wiki 上下文。这些 practical context tools 不读取
+`ai_kb/raw/`；raw 仍然是主写入 Agent 使用的原始物料层。
 
 ## Obsidian Tags 与索引
 

@@ -1,5 +1,14 @@
 # Roadmap
 
+## v0.3.3 Status
+
+Implemented:
+
+- Claude Desktop practical MCP context tools: overview, search, read, and bundle.
+- Practical context tools exclude `ai_kb/raw/` even if the Claude policy is wider.
+- Claude Desktop status reports practical tools and setup warnings.
+- README / README_CN and Claude Desktop docs document the recommended Project workflow.
+
 ## v0.3.2 Status
 
 Implemented:

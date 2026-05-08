@@ -9,11 +9,12 @@ It is not a normal note template and it is not a RAG system. The project separat
 
 ## Status
 
-v0.3.2 provides deterministic scaffolding, initialization, manifest scanning,
+v0.3.3 provides deterministic scaffolding, initialization, manifest scanning,
 source-card templates, prompt rendering, linting, current export, mini-kb draft generation,
 optional Hermes skills, Obsidian-friendly Markdown tags, machine-readable indexes, and
 stronger consistency checks. It also includes doctor diagnostics, Hermes status, multi-agent access
-profiles, and a Claude Desktop read-only MCP adapter. It does not call an LLM API by default.
+profiles, and a Claude Desktop read-only MCP adapter with practical context tools. It does not call
+an LLM API by default.
 
 ## Quick Start
 
@@ -42,7 +43,7 @@ archive/               Archived material.
 
 ## CLI
 
-v0.3.2 supports:
+v0.3.3 supports:
 
 ```bash
 linta init ./SimonKnowledgeBase
@@ -85,6 +86,7 @@ v0.2.5 adds `doctor` and `hermes status` for installation and pre-use diagnostic
 v0.3.0 adds `.linta/agent_access.yaml`, `agents wizard`, and Claude Desktop read-only MCP.
 v0.3.1 renames the project to Linta / 灵台.
 v0.3.2 adds rename migration hardening through `linta migrate`.
+v0.3.3 adds practical Claude Desktop MCP context tools for overview, search, read, and bundle.
 
 ## Verify Installation
 
@@ -135,6 +137,11 @@ linta claude-desktop status ./SimonKnowledgeBase
 Add the generated MCP snippet to Claude Desktop and restart the app. The read-only boundary applies
 to the Linta MCP adapter; separately granted filesystem or shell tools are outside this
 project's enforcement boundary.
+
+Claude Desktop should start with the `context_overview` MCP tool, then use `context_search`,
+`context_read`, and `context_bundle` to choose relevant compiled wiki context. These practical
+context tools do not read `ai_kb/raw/`; raw remains the source-material layer for the primary
+writer agent.
 
 ## Obsidian Tags and Indexes
 
