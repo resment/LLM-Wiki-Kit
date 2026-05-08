@@ -18,6 +18,7 @@ from linta.agent_access import (
     read_agent_policy,
 )
 from linta.doctor import doctor_json, run_doctor
+from linta.linting import lint_knowledge_base
 
 READ_ONLY_TOOLS = (
     "doctor",
@@ -239,6 +240,7 @@ class ReadOnlyMcpServer:
                 "source_cards": self._path_status("ai_kb/wiki/source_cards"),
                 "indexes": self._path_status("ai_kb/wiki/indexes"),
             },
+            "freshness": self._context_freshness(),
             "files": files,
         }
 
@@ -289,17 +291,50 @@ class ReadOnlyMcpServer:
                     "text": text,
                 }
             )
+        freshness = self._context_freshness()
         return {
             "kb_root": self.kb_root.as_posix(),
             "query": query,
             "boundary": (
                 "This bundle contains compiled Linta context only. Raw sources are excluded."
             ),
+            "freshness": freshness,
+            "warnings": freshness["warnings"],
             "files": files,
             "source_cards": [
                 path for path in selected if path.startswith("ai_kb/wiki/source_cards/")
             ],
             "indexes": [path for path in selected if path.startswith("ai_kb/wiki/indexes/")],
+        }
+
+    def _context_freshness(self) -> dict[str, Any]:
+        issues = lint_knowledge_base(self.kb_root)
+        errors = [issue for issue in issues if issue.severity == "error"]
+        warnings = [issue for issue in issues if issue.severity == "warning"]
+        warning_messages = _freshness_warnings(self.kb_root, issues)
+        return {
+            "ok": not errors,
+            "indexes_present": _has_json_files(self.kb_root / "ai_kb/wiki/indexes"),
+            "current_pages": _count_markdown_files(self.kb_root / "ai_kb/wiki/current"),
+            "missing_source_cards": [
+                issue.path for issue in issues if issue.code == "missing-source-card"
+            ],
+            "manifest_issues": [
+                issue.path
+                for issue in issues
+                if issue.code in {"raw-not-in-manifest", "manifest-source-missing"}
+            ],
+            "stale_current": [issue.path for issue in issues if issue.code == "stale-current"],
+            "lint_issue_count": len(issues),
+            "lint_error_count": len(errors),
+            "lint_warning_count": len(warnings),
+            "warnings": warning_messages,
+            "recommended_action": (
+                "Ask the primary writer Agent to run linta maintenance daily before relying on "
+                "this context."
+                if warning_messages
+                else "Context freshness signals are clean."
+            ),
         }
 
     def _default_context_entrypoints(self, *, limit: int) -> list[str]:
@@ -480,3 +515,36 @@ def _content_type(relative_path: str) -> str:
     if relative_path.startswith("ai_kb/schema/"):
         return "schema"
     return "wiki_context"
+
+
+def _freshness_warnings(kb_root: Path, issues: list[Any]) -> list[str]:
+    warnings: list[str] = []
+    if not _has_json_files(kb_root / "ai_kb/wiki/indexes"):
+        warnings.append(
+            "Indexes are missing; ask the primary writer Agent to run linta index build."
+        )
+    if not _has_markdown_files(kb_root / "ai_kb/wiki/current"):
+        warnings.append("Confirmed current context is missing.")
+    if any(issue.code == "missing-source-card" for issue in issues):
+        warnings.append("Some raw sources are missing source cards.")
+    if any(issue.code in {"raw-not-in-manifest", "manifest-source-missing"} for issue in issues):
+        warnings.append("Manifest and raw sources are inconsistent.")
+    if any(issue.code == "stale-current" for issue in issues):
+        warnings.append("Some confirmed current pages may be stale.")
+    if any(issue.severity == "error" for issue in issues):
+        warnings.append("Deterministic lint errors are present.")
+    return warnings
+
+
+def _has_json_files(path: Path) -> bool:
+    return path.exists() and any(path.glob("*.json"))
+
+
+def _has_markdown_files(path: Path) -> bool:
+    return path.exists() and any(path.rglob("*.md"))
+
+
+def _count_markdown_files(path: Path) -> int:
+    if not path.exists():
+        return 0
+    return sum(1 for child in path.rglob("*.md") if child.is_file())

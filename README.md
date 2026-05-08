@@ -9,7 +9,7 @@ It is not a normal note template and it is not a RAG system. The project separat
 
 ## Status
 
-v0.3.4 provides deterministic scaffolding, initialization, manifest scanning,
+v0.3.5 provides deterministic scaffolding, initialization, manifest scanning,
 source-card templates, prompt rendering, linting, current export, mini-kb draft generation,
 optional Hermes skills, Obsidian-friendly Markdown tags, machine-readable indexes, and
 stronger consistency checks. It also includes doctor diagnostics, Hermes status, multi-agent access
@@ -43,7 +43,7 @@ archive/               Archived material.
 
 ## CLI
 
-v0.3.4 supports:
+v0.3.5 supports:
 
 ```bash
 linta init ./SimonKnowledgeBase
@@ -89,6 +89,7 @@ v0.3.1 renames the project to Linta / 灵台.
 v0.3.2 adds rename migration hardening through `linta migrate`.
 v0.3.3 adds practical Claude Desktop MCP context tools for overview, search, read, and bundle.
 v0.3.4 adds Claude Project instructions for practical Linta MCP usage.
+v0.3.5 adds context freshness signals for Claude Desktop MCP overview and bundles.
 
 ## Verify Installation
 
@@ -149,6 +150,11 @@ writer agent.
 Paste the `project-instructions` output into Claude Project instructions so Claude starts with
 Linta context tools, cites Linta paths, and reports missing compiled context instead of requesting
 raw sources.
+
+`context_overview` and `context_bundle` include freshness signals for missing indexes, missing
+current context, missing source cards, manifest inconsistency, stale current pages, and lint errors.
+If warnings are present, Claude should ask the primary writer Agent to run `linta maintenance daily`
+before relying on the context.
 
 ## Obsidian Tags and Indexes
 

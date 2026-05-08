@@ -1,5 +1,14 @@
 # Roadmap
 
+## v0.3.5 Status
+
+Implemented:
+
+- Freshness signals in Claude Desktop `context_overview` and `context_bundle`.
+- Warnings for missing indexes, missing current context, missing source cards, manifest drift, stale current pages, and lint errors.
+- Claude Project instructions tell Claude to request `linta maintenance daily` when freshness warnings appear.
+- README / README_CN and Claude Desktop docs document freshness behavior.
+
 ## v0.3.4 Status
 
 Implemented:

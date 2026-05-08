@@ -6,6 +6,9 @@ configuration; Linta only exposes deterministic read tools.
 v0.3.3 adds practical context tools so Claude Desktop can discover, search, read, and bundle
 compiled Linta context inside a Claude Project without reading raw source material.
 
+v0.3.5 adds freshness signals to `context_overview` and `context_bundle` so Claude can see whether
+indexes, current context, source cards, manifest consistency, and lint health need maintenance.
+
 ## Configure Agent Access
 
 Create an access policy inside the knowledge base:
@@ -88,6 +91,10 @@ The practical tools are:
 - `context_search`: searches allowed compiled context and returns paths, lines, and snippets.
 - `context_read`: reads one allowed context file.
 - `context_bundle`: builds a compact package from a query or explicit paths.
+
+`context_overview` and `context_bundle` include freshness warnings. If warnings are present, Claude
+should report them first and ask for the primary writer Agent to run `linta maintenance daily` or
+ingest missing sources before relying on stale or incomplete context.
 
 Machine-readable output is also available:
 

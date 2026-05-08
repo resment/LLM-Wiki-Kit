@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-v0.3.4 提供确定性的项目脚手架、初始化命令、manifest 扫描、source card 模板、prompt 渲染、lint、current 导出、mini-kb 草稿、可选 Hermes skills、Obsidian 友好的 Markdown tags、机器可读索引、上传文档导入、每日维护报告、doctor、Hermes status、多 Agent 访问策略和带 practical context tools / Project instructions 的 Claude Desktop 只读 MCP adapter。默认不调用任何 LLM API。
+v0.3.5 提供确定性的项目脚手架、初始化命令、manifest 扫描、source card 模板、prompt 渲染、lint、current 导出、mini-kb 草稿、可选 Hermes skills、Obsidian 友好的 Markdown tags、机器可读索引、上传文档导入、每日维护报告、doctor、Hermes status、多 Agent 访问策略和带 practical context tools / Project instructions / freshness signals 的 Claude Desktop 只读 MCP adapter。默认不调用任何 LLM API。
 
 ## 快速开始
 
@@ -31,7 +31,7 @@ archive/               归档资料。
 
 ## CLI
 
-v0.3.4 支持：
+v0.3.5 支持：
 
 ```bash
 linta init ./SimonKnowledgeBase
@@ -115,6 +115,10 @@ Claude Desktop 推荐先调用 `context_overview`，再用 `context_search`、`c
 
 把 `project-instructions` 的输出粘贴到 Claude Project instructions 中，Claude 就会按
 Linta MCP 工具顺序读取整理后的上下文、引用 Linta path，并在上下文不足时说明缺口，而不是请求 raw。
+
+`context_overview` 和 `context_bundle` 会返回 freshness signals，包括缺少 indexes、缺少
+current、缺 source cards、manifest 不一致、current 可能过期和 lint errors。出现 warning 时，
+Claude 应该先提示让主写入 Agent 执行 `linta maintenance daily`，再依赖这些上下文。
 
 ## Obsidian Tags 与索引
 

@@ -137,6 +137,10 @@ def build_claude_project_instructions(kb_root: Path) -> ClaudeProjectInstruction
             "Prefer `context_bundle` when a query can be answered from multiple wiki pages or "
             "source cards. Prefer `context_read` when a specific Linta path is already known.",
             "",
+            "If `context_overview` or `context_bundle` returns freshness warnings, report the "
+            "warnings first and ask for the primary writer Agent to run `linta maintenance daily` "
+            "or ingest missing sources before relying on stale or incomplete context.",
+            "",
             "When answering, cite the Linta paths you used, such as `ai_kb/wiki/current/...`, "
             "`ai_kb/wiki/portfolio/...`, or `ai_kb/wiki/source_cards/...`.",
             "",
