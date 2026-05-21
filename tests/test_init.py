@@ -26,6 +26,9 @@ CORE_DIRECTORIES = [
     "ai_kb/wiki/domains",
     "ai_kb/wiki/capabilities",
     "ai_kb/wiki/concepts",
+    "ai_kb/wiki/entities/people",
+    "ai_kb/wiki/entities/teams",
+    "ai_kb/wiki/entities/product_lines",
     "ai_kb/wiki/analysis",
     "ai_kb/wiki/current",
     "ai_kb/wiki/current_draft",
@@ -46,8 +49,13 @@ CORE_FILES = [
     "ai_kb/wiki/log.md",
     "ai_kb/wiki/source_manifest.md",
     "ai_kb/wiki/portfolio/projects.md",
+    "ai_kb/wiki/portfolio/project_map.md",
     "ai_kb/wiki/portfolio/capabilities.md",
     "ai_kb/wiki/portfolio/source_trust.md",
+    "ai_kb/wiki/entities/aliases.md",
+    "ai_kb/wiki/entities/people/_person.template.md",
+    "ai_kb/wiki/entities/teams/_team.template.md",
+    "ai_kb/wiki/entities/product_lines/_product_line.template.md",
 ]
 
 

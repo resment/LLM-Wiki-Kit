@@ -7,6 +7,10 @@ indirect_projects: []
 domains: []
 capabilities: []
 concepts: []
+people: []
+teams: []
+product_lines: []
+aliases: []
 ingest_status: draft
 current_impact: unknown
 created_at:
@@ -37,6 +41,14 @@ updated_at:
 
 ### Concepts
 
+### People
+
+### Teams
+
+### Product Lines
+
+### Aliases
+
 ## Current State Impact
 
 ## Conflicts / Risks
@@ -44,4 +56,3 @@ updated_at:
 ## Pages to Update
 
 ## Notes for Human Review
-

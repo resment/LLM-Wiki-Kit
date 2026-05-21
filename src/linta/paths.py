@@ -22,6 +22,9 @@ KB_DIRECTORIES: tuple[str, ...] = (
     "ai_kb/wiki/domains",
     "ai_kb/wiki/capabilities",
     "ai_kb/wiki/concepts",
+    "ai_kb/wiki/entities/people",
+    "ai_kb/wiki/entities/teams",
+    "ai_kb/wiki/entities/product_lines",
     "ai_kb/wiki/analysis",
     "ai_kb/wiki/current",
     "ai_kb/wiki/current_draft",
@@ -90,6 +93,7 @@ Review AI-generated diffs before committing changes.
 - `ai_kb/raw/`: immutable source of truth.
 - `ai_kb/wiki/`: AI-compiled knowledge layer.
 - `ai_kb/wiki/source_cards/`: structured summaries for raw sources.
+- `ai_kb/wiki/entities/`: compiled people, team, product-line, and alias context.
 - `ai_kb/wiki/current_draft/`: AI-generated current-state drafts.
 - `ai_kb/wiki/current/`: human-confirmed current state.
 - `ai_kb/schema/`: rules for agents.
@@ -117,6 +121,18 @@ Every important claim in `current/` and `current_draft/` must cite at least one 
 - supersedes
 - shares_capability
 - future_extension
+- reports_to
+- owns
+- blocks
+- participates_in
+
+## Entity Context Rule
+
+Entity pages must not contain conclusion-style personal judgments. Use source-backed behavior
+patterns, concerns, decision scope, communication patterns, and historical cases. Do not write
+personality labels or unsupported evaluations. Time-sensitive relationships should include
+`effective_from`, `effective_to`, `relationship_type`, `target_entity`, and `source_path` when
+known.
 """,
     ),
     TemplateFile(
@@ -134,6 +150,7 @@ title: Wiki Index
 - Domains: `domains/`
 - Capabilities: `capabilities/`
 - Concepts: `concepts/`
+- Entities: `entities/`
 - Current drafts: `current_draft/`
 - Confirmed current state: `current/`
 """,
@@ -172,6 +189,22 @@ title: Projects
 """,
     ),
     TemplateFile(
+        "ai_kb/wiki/portfolio/project_map.md",
+        """---
+title: Project Map
+projects: []
+---
+
+# Project Map
+
+Use this page to map project aliases, related people, related teams, current phase, possible
+blockers, and historical controversy points.
+
+| Project | Aliases | People | Teams | Phase | Blockers | Controversy | Sources |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+""",
+    ),
+    TemplateFile(
         "ai_kb/wiki/portfolio/capabilities.md",
         """---
 title: Capabilities
@@ -189,6 +222,114 @@ title: Source Trust
 # Source Trust
 
 Use this page to describe source reliability, freshness, and review expectations.
+""",
+    ),
+    TemplateFile(
+        "ai_kb/wiki/entities/aliases.md",
+        """---
+title: Entity Aliases
+aliases: []
+---
+
+# Entity Aliases
+
+Use this page to maintain stable aliases for people, teams, product lines, and projects. Keep
+aliases source-backed and avoid merging ambiguous identities without human review.
+
+| Alias | Entity ID | Entity type | Status | Sources | Notes |
+| --- | --- | --- | --- | --- | --- |
+""",
+    ),
+    TemplateFile(
+        "ai_kb/wiki/entities/people/_person.template.md",
+        """---
+title: Person Template
+entity_type: person
+entity_id:
+aliases: []
+current_affiliation:
+relationships: []
+---
+
+# Person Template
+
+## Current Affiliation
+
+## Time-sliced Role Relationships
+
+Use entries with `effective_from`, `effective_to`, `relationship_type`, `target_entity`, and
+`source_path` when known.
+
+## Decision Scope
+
+## Observed Concerns
+
+## Blocking Patterns
+
+## Communication Patterns
+
+## Source-backed Cases
+
+## Review Questions
+""",
+    ),
+    TemplateFile(
+        "ai_kb/wiki/entities/teams/_team.template.md",
+        """---
+title: Team Template
+entity_type: team
+entity_id:
+aliases: []
+parent_entities: []
+child_entities: []
+relationships: []
+---
+
+# Team Template
+
+## Responsibility Boundary
+
+## Parent / Child Relationships
+
+## Related People
+
+## Related Projects
+
+## Source-backed Cases
+
+## Review Questions
+""",
+    ),
+    TemplateFile(
+        "ai_kb/wiki/entities/product_lines/_product_line.template.md",
+        """---
+title: Product Line Template
+entity_type: product_line
+entity_id:
+aliases: []
+included_surfaces: []
+excluded_surfaces: []
+adjacent_product_lines: []
+relationships: []
+---
+
+# Product Line Template
+
+## Boundary
+
+## Included Surfaces
+
+## Excluded Surfaces
+
+## Adjacent Product Lines
+
+## Related Teams
+
+## Related Projects
+
+## Source-backed Cases
+
+## Review Questions
 """,
     ),
 )

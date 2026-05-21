@@ -16,6 +16,7 @@ title: Wiki Index
 - `domains/`
 - `capabilities/`
 - `concepts/`
+- `entities/`
 - `analysis/`
 
 ## Current State

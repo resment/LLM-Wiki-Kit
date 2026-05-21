@@ -87,6 +87,10 @@ indirect_projects: []
 domains: []
 capabilities: []
 concepts: []
+people: []
+teams: []
+product_lines: []
+aliases: []
 ingest_status: draft
 current_impact: unknown
 created_at: {now}
@@ -118,6 +122,14 @@ updated_at: {now}
 ### Shared Capabilities
 
 ### Concepts
+
+### People
+
+### Teams
+
+### Product Lines
+
+### Aliases
 
 ## Current State Impact
 

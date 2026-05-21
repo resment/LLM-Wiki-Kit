@@ -36,6 +36,23 @@ def render_ingest_prompt(kb_root: Path, raw_source: Path) -> str:
     )
 
 
+def render_entities_prompt(kb_root: Path, raw_source: Path) -> str:
+    root = kb_root.expanduser().resolve()
+    source = raw_source if raw_source.is_absolute() else root / raw_source
+    relative_source = source.resolve().relative_to(root).as_posix()
+    card_path = source_card_path(root, relative_source).relative_to(root).as_posix()
+    return render_prompt(
+        root,
+        "entities",
+        {
+            "kb_root": root.as_posix(),
+            "source_path": relative_source,
+            "agents_path": "ai_kb/schema/AGENTS.md",
+            "source_card_path": card_path,
+        },
+    )
+
+
 def render_lint_ai_prompt(kb_root: Path) -> str:
     root = kb_root.expanduser().resolve()
     return render_prompt(root, "lint", {"kb_root": root.as_posix()})

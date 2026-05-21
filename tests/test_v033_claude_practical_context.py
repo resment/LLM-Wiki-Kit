@@ -25,6 +25,7 @@ def test_context_overview_reports_practical_surface(tmp_path: Path) -> None:
 
     assert payload["practical_tools"] == list(PRACTICAL_CONTEXT_TOOLS)
     assert payload["entrypoints"]["current"]["file_count"] == 1
+    assert payload["entrypoints"]["entities"]["file_count"] == 4
     assert "ai_kb/wiki/current/summary.md" in payload["files"]
     assert "ai_kb/raw" in payload["boundary"]
 
@@ -86,6 +87,36 @@ def test_context_bundle_builds_query_package(tmp_path: Path) -> None:
     assert "ai_kb/wiki/portfolio/projects.md" in paths
     assert "ai_kb/wiki/source_cards/alpha.md" in paths
     assert "Raw sources are excluded" in payload["boundary"]
+
+
+def test_context_search_and_bundle_include_entity_context(tmp_path: Path) -> None:
+    kb = tmp_path / "kb"
+    init_knowledge_base(kb)
+    configure_agent_access(kb, primary_agent="hermes")
+    entity = kb / "ai_kb/wiki/entities/people/alex-reviewer.md"
+    entity.write_text(
+        """---
+title: Alex Reviewer
+entity_type: person
+entity_id: person.alex-reviewer
+aliases: [Alex]
+---
+
+# Alex Reviewer
+
+Alex participates in Review Routing.
+""",
+        encoding="utf-8",
+    )
+
+    server = ReadOnlyMcpServer(kb_root=kb, agent="claude-desktop")
+    search_payload = _json_tool(server, "context_search", {"query": "Review Routing", "limit": 10})
+    paths = {match["path"] for match in search_payload["matches"]}
+    assert "ai_kb/wiki/entities/people/alex-reviewer.md" in paths
+
+    bundle_payload = _json_tool(server, "context_bundle", {"query": "Review Routing", "limit": 5})
+    bundled_paths = [file["path"] for file in bundle_payload["files"]]
+    assert "ai_kb/wiki/entities/people/alex-reviewer.md" in bundled_paths
 
 
 def test_practical_context_ignores_full_kb_raw_access(tmp_path: Path) -> None:

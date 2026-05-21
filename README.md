@@ -16,6 +16,10 @@ stronger consistency checks. It also includes doctor diagnostics, Hermes status,
 profiles, and a Claude Desktop read-only MCP adapter with practical context tools. It does not call
 an LLM API by default.
 
+The compiled wiki can also maintain entity context for people, teams, product lines, aliases, and
+project mappings. Entity extraction is prompt-driven: Linta provides deterministic templates,
+indexes, lint checks, and agent prompts, while the configured agent writes source-backed drafts.
+
 ## Quick Start
 
 ```bash
@@ -31,6 +35,7 @@ For local development after cloning the repository, use `pip install -e ".[dev]"
 human/                 Personal writing area. AI should not edit it by default.
 ai_kb/raw/             Immutable source of truth.
 ai_kb/wiki/            AI-compiled knowledge layer.
+ai_kb/wiki/entities/   People, team, product-line, alias, and relationship context.
 ai_kb/wiki/indexes/    Machine-readable JSON indexes.
 ai_kb/schema/          Maintenance rules for agents.
 ai_kb/export_for_ai/   Consumption layer for other AI tools.
@@ -51,6 +56,7 @@ linta manifest scan ./SimonKnowledgeBase
 linta manifest scan ./SimonKnowledgeBase --no-preserve-manual-fields
 linta source-card create ./SimonKnowledgeBase ai_kb/raw/meetings/example.md
 linta prompt ingest ./SimonKnowledgeBase ai_kb/raw/meetings/example.md
+linta prompt entities ./SimonKnowledgeBase ai_kb/raw/meetings/example.md
 linta prompt tag ./SimonKnowledgeBase ai_kb/wiki/projects/example.md
 linta tags list ./SimonKnowledgeBase/ai_kb/wiki/projects/example.md
 linta tags add ./SimonKnowledgeBase/ai_kb/wiki/projects/example.md --tag project/example
@@ -169,6 +175,20 @@ before relying on the context.
 Tags are normalized to lowercase kebab-case and may use namespaces such as `#project/...`,
 `#capability/...`, and `#status/...`. The CLI refuses to write tags into `ai_kb/raw/`; raw sources
 remain immutable. `linta index build` writes JSON indexes under `ai_kb/wiki/indexes/` for tools.
+
+## Entity Context
+
+Entity context lives under `ai_kb/wiki/entities/` and `ai_kb/wiki/portfolio/project_map.md`. Use it
+to maintain stable IDs, aliases, people, teams, product lines, project mappings, and time-sliced
+relationships. Relationship entries should carry fields such as `effective_from`, `effective_to`,
+`relationship_type`, `target_entity`, and `source_path` so historical sources keep their original
+organizational context.
+
+Use `linta prompt entities <kb_root> <raw_source>` to generate an agent prompt for focused entity
+updates. Entity pages should avoid conclusion-style personal judgments and should instead record
+source-backed behavior patterns, concerns, decision scope, communication patterns, and historical
+cases. `linta index build` emits `entities.json`, `relationships.json`, and `project_map.json` in
+addition to the existing source, project, capability, and tag indexes.
 
 ## Uploads and Maintenance
 

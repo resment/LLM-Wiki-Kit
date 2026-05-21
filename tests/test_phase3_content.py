@@ -42,7 +42,12 @@ def test_product_knowledge_ops_example_contains_required_relationships() -> None
         "ai_kb/wiki/source_manifest.md",
         "ai_kb/wiki/source_cards/meetings__2026-04-21_flexible-review-workflow_meeting.source-card.md",
         "ai_kb/wiki/portfolio/projects.md",
+        "ai_kb/wiki/portfolio/project_map.md",
         "ai_kb/wiki/portfolio/capabilities.md",
+        "ai_kb/wiki/entities/aliases.md",
+        "ai_kb/wiki/entities/people/alex-reviewer.md",
+        "ai_kb/wiki/entities/teams/review-operations.md",
+        "ai_kb/wiki/entities/product_lines/review-workflows.md",
         "ai_kb/wiki/current/core-knowledge-portal.md",
         "ai_kb/wiki/current_draft/flexible-review-workflow.md",
         "ai_kb/export_for_ai/mini_kb/flexible-review-workflow__review-prep.md",
@@ -58,12 +63,16 @@ def test_product_knowledge_ops_example_contains_required_relationships() -> None
     assert "shares_capability Review Configuration" in project_text
     assert "Flexible Review Workflow" in capability_text
     assert "Team Workflow Expansion" in capability_text
+    assert "person.alex-reviewer" in (
+        example / "ai_kb/wiki/portfolio/project_map.md"
+    ).read_text(encoding="utf-8")
 
 
 def test_prompt_templates_are_actionable() -> None:
     prompt_dir = REPO_ROOT / "templates/prompts"
     for name in [
         "ingest.md",
+        "entities.md",
         "lint.md",
         "export.md",
         "mini_kb.md",

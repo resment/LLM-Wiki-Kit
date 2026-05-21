@@ -6,6 +6,7 @@
 - `ai_kb/raw/`: immutable source of truth.
 - `ai_kb/wiki/`: AI-compiled knowledge layer.
 - `ai_kb/wiki/source_cards/`: structured summaries for raw sources.
+- `ai_kb/wiki/entities/`: compiled people, team, product-line, and alias context.
 - `ai_kb/wiki/current_draft/`: AI-generated current-state drafts.
 - `ai_kb/wiki/current/`: human-confirmed current state.
 - `ai_kb/schema/`: rules for agents.
@@ -34,11 +35,23 @@ Every important claim in `current/` and `current_draft/` must cite at least one 
 - supersedes
 - shares_capability
 - future_extension
+- reports_to
+- owns
+- blocks
+- participates_in
+
+## Entity Context Rule
+
+Entity pages must not contain conclusion-style personal judgments. Use source-backed behavior
+patterns, concerns, decision scope, communication patterns, and historical cases. Do not write
+personality labels or unsupported evaluations. Time-sensitive relationships should include
+`effective_from`, `effective_to`, `relationship_type`, `target_entity`, and `source_path` when known.
 
 ## Ingest Workflow
 
 1. Read the raw source.
-2. Identify date, type, direct projects, indirect projects, domains, capabilities, concepts.
+2. Identify date, type, direct projects, indirect projects, domains, capabilities, concepts,
+   people, teams, product lines, aliases, and time-sensitive relationships.
 3. Create or update source card.
 4. Update source_manifest.
 5. Update related wiki pages.

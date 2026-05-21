@@ -137,6 +137,19 @@ def test_prompt_tag_mentions_obsidian_and_raw_rule(tmp_path: Path) -> None:
     assert "#project/..." in result.output
 
 
+def test_prompt_entities_mentions_entity_workflow(tmp_path: Path) -> None:
+    root = make_kb(tmp_path)
+    raw = write_raw(root)
+
+    result = runner.invoke(app, ["prompt", "entities", str(root), raw.relative_to(root).as_posix()])
+
+    assert result.exit_code == 0, result.output
+    assert "entity context layer" in result.output
+    assert "ai_kb/wiki/entities/aliases.md" in result.output
+    assert "effective_from" in result.output
+    assert "Do not write conclusion-style personal judgments" in result.output
+
+
 def test_manifest_scan_preserves_manual_fields(tmp_path: Path) -> None:
     root = make_kb(tmp_path)
     write_raw(root)
@@ -195,6 +208,88 @@ capabilities: [Review Configuration]
     assert result.data["tags"][0]["tag"] == "#capability/review-configuration"
 
 
+def test_index_build_outputs_entities_relationships_and_project_map(tmp_path: Path) -> None:
+    root = make_kb(tmp_path)
+    person = root / "ai_kb/wiki/entities/people/alex-reviewer.md"
+    person.write_text(
+        """---
+title: Alex Reviewer
+entity_type: person
+entity_id: person.alex-reviewer
+aliases: [Alex, A. Reviewer]
+relationships:
+  - relationship_type: reports_to
+    target_entity: team.platform-review
+    effective_from: 2026-04-01
+    effective_to:
+    source_path: ai_kb/raw/meetings/2026-04-21_example.md
+---
+
+# Alex Reviewer
+""",
+        encoding="utf-8",
+    )
+    team = root / "ai_kb/wiki/entities/teams/platform-review.md"
+    team.write_text(
+        """---
+title: Platform Review
+entity_type: team
+entity_id: team.platform-review
+aliases: [Review Team]
+relationships: []
+---
+
+# Platform Review
+""",
+        encoding="utf-8",
+    )
+    product_line = root / "ai_kb/wiki/entities/product_lines/review-ops.md"
+    product_line.write_text(
+        """---
+title: Review Operations
+entity_type: product_line
+entity_id: product_line.review-ops
+aliases: [Review Ops]
+relationships: []
+---
+
+# Review Operations
+""",
+        encoding="utf-8",
+    )
+    project_map = root / "ai_kb/wiki/portfolio/project_map.md"
+    project_map.write_text(
+        """---
+title: Project Map
+projects:
+  - project: Review Routing
+    aliases: [Routing Project]
+    related_people: [person.alex-reviewer]
+    related_teams: [team.platform-review]
+    current_phase: beta
+    possible_blockers: [policy review]
+    historical_controversy_points: [routing scope]
+    sources: [ai_kb/raw/meetings/2026-04-21_example.md]
+---
+
+# Project Map
+""",
+        encoding="utf-8",
+    )
+
+    result = build_indexes(root)
+
+    assert (root / "ai_kb/wiki/indexes/entities.json").exists()
+    assert (root / "ai_kb/wiki/indexes/relationships.json").exists()
+    assert (root / "ai_kb/wiki/indexes/project_map.json").exists()
+    assert result.data["entities"][0]["entity_id"] == "person.alex-reviewer"
+    assert result.data["entities"][0]["aliases"] == ["Alex", "A. Reviewer"]
+    assert result.data["relationships"][0]["relationship_type"] == "reports_to"
+    assert result.data["relationships"][0]["source_path"].endswith("2026-04-21_example.md")
+    assert result.data["project_map"][0]["project"] == "Review Routing"
+    assert result.data["project_map"][0]["related_people"] == ["person.alex-reviewer"]
+
+
 def test_index_build_dry_run_does_not_write(tmp_path: Path) -> None:
     root = make_kb(tmp_path)
 
@@ -241,6 +336,64 @@ title: Current
     assert "missing-source-citation" in codes
     assert "broken-markdown-link" in codes
     assert "invalid-managed-tag" in codes
+
+
+def test_lint_detects_entity_context_issues(tmp_path: Path) -> None:
+    root = make_kb(tmp_path)
+    first = root / "ai_kb/wiki/entities/people/alex.md"
+    first.write_text(
+        """---
+title: Alex
+entity_type: person
+entity_id: person.alex
+aliases: [Alex]
+relationships:
+  - relationship_type: reports_to
+    target_entity: team.review
+---
+
+# Alex
+
+## Personality
+""",
+        encoding="utf-8",
+    )
+    second = root / "ai_kb/wiki/entities/people/alex-other.md"
+    second.write_text(
+        """---
+title: Alex Other
+entity_type: person
+entity_id: person.alex-other
+aliases: [Alex]
+relationships: []
+---
+
+# Alex Other
+""",
+        encoding="utf-8",
+    )
+    current = root / "ai_kb/wiki/current/entity-summary.md"
+    current.write_text(
+        """---
+title: Entity Summary
+---
+
+# Entity Summary
+
+## Observed Concerns
+
+Concern without source citation.
+""",
+        encoding="utf-8",
+    )
+
+    issues = lint_knowledge_base(root)
+    codes = {issue.code for issue in issues}
+
+    assert "duplicate-entity-alias" in codes
+    assert "relationship-missing-source-path" in codes
+    assert "forbidden-entity-judgment" in codes
+    assert "entity-observation-missing-source-citation" in codes
 
 
 def test_cli_index_build(tmp_path: Path) -> None:

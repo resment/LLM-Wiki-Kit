@@ -37,6 +37,7 @@ WIKI_CONTEXT_PATHS = (
     "AGENTS.md",
     "ai_kb/schema/AGENTS.md",
     "ai_kb/wiki/current",
+    "ai_kb/wiki/entities",
     "ai_kb/wiki/portfolio",
     "ai_kb/wiki/indexes",
     "ai_kb/wiki/source_manifest.md",

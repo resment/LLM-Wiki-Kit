@@ -57,6 +57,7 @@ linta = ["py.typed", "assets/hermes/skills/*/*.md"]
 [tool.setuptools.data-files]
 "templates/prompts" = [
   "templates/prompts/confirm_current.md",
+  "templates/prompts/entities.md",
   "templates/prompts/export.md",
   "templates/prompts/ingest.md",
   "templates/prompts/lint.md",

@@ -235,6 +235,7 @@ class ReadOnlyMcpServer:
             "practical_tools": list(PRACTICAL_CONTEXT_TOOLS),
             "entrypoints": {
                 "current": self._path_status("ai_kb/wiki/current"),
+                "entities": self._path_status("ai_kb/wiki/entities"),
                 "portfolio": self._path_status("ai_kb/wiki/portfolio"),
                 "manifest": self._path_status("ai_kb/wiki/source_manifest.md"),
                 "source_cards": self._path_status("ai_kb/wiki/source_cards"),
@@ -504,6 +505,8 @@ def _unique(values: list[str]) -> list[str]:
 def _content_type(relative_path: str) -> str:
     if relative_path.startswith("ai_kb/wiki/current/"):
         return "current"
+    if relative_path.startswith("ai_kb/wiki/entities/"):
+        return "entity"
     if relative_path.startswith("ai_kb/wiki/portfolio/"):
         return "portfolio"
     if relative_path.startswith("ai_kb/wiki/source_cards/"):

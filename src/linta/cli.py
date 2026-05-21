@@ -43,7 +43,12 @@ from linta.manifest import scan_manifest
 from linta.mcp_server import serve_mcp_stdio
 from linta.migration import migration_json, migration_markdown, run_rename_migration
 from linta.mini_kb import create_mini_kb
-from linta.prompts import render_ingest_prompt, render_lint_ai_prompt, render_tag_prompt
+from linta.prompts import (
+    render_entities_prompt,
+    render_ingest_prompt,
+    render_lint_ai_prompt,
+    render_tag_prompt,
+)
 from linta.raw_import import RAW_SOURCE_TYPES, import_raw_source
 from linta.source_card import create_source_card
 from linta.tags import add_tags_to_file, list_tags, set_tags_in_file
@@ -286,6 +291,16 @@ def prompt_lint_ai(
     """Render a semantic lint prompt for an external agent."""
 
     console.print(render_lint_ai_prompt(kb_root))
+
+
+@prompt_app.command("entities")
+def prompt_entities(
+    kb_root: Annotated[Path, typer.Argument(help="Knowledge base root.")],
+    raw_source: Annotated[Path, typer.Argument(help="Raw source path under ai_kb/raw.")],
+) -> None:
+    """Render an entity-context update prompt for an external agent."""
+
+    console.print(render_entities_prompt(kb_root, raw_source))
 
 
 @prompt_app.command("tag")

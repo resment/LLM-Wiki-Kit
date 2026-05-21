@@ -13,6 +13,23 @@ from linta.tags import validate_managed_tag_block
 from linta.utils.frontmatter import has_frontmatter, parse_frontmatter
 from linta.utils.links import extract_markdown_links, resolve_link
 
+FORBIDDEN_ENTITY_TERMS = (
+    "personality",
+    "personality judgment",
+    "人格",
+    "人设",
+    "性格判断",
+    "结论性评价",
+)
+ENTITY_OBSERVATION_TERMS = (
+    "Observed Concerns",
+    "Blocking Patterns",
+    "Communication Patterns",
+    "行为模式",
+    "关注点",
+    "常见说话风格",
+)
+
 
 @dataclass(frozen=True)
 class LintIssue:
@@ -95,6 +112,8 @@ def lint_knowledge_base(kb_root: Path, *, max_current_age: int = 30) -> list[Lin
         text = wiki_page.read_text(encoding="utf-8")
         if "ai_kb/wiki/source_cards/" in relative:
             _extend_source_card_issues(root, wiki_page, issues)
+        if "ai_kb/wiki/entities/" in relative:
+            _extend_entity_issues(root, wiki_page, issues)
         if not has_frontmatter(text):
             issues.append(
                 LintIssue(
@@ -124,6 +143,20 @@ def lint_knowledge_base(kb_root: Path, *, max_current_age: int = 30) -> list[Lin
                     "Current page does not cite an ai_kb/raw/ source path.",
                 )
             )
+
+    for current_page in current_pages:
+        text = current_page.read_text(encoding="utf-8")
+        if _contains_any(text, ENTITY_OBSERVATION_TERMS) and "ai_kb/raw/" not in text:
+            issues.append(
+                LintIssue(
+                    "warning",
+                    "entity-observation-missing-source-citation",
+                    current_page.relative_to(root).as_posix(),
+                    "Entity-style observations in current must cite an ai_kb/raw/ source path.",
+                )
+            )
+
+    _extend_alias_collision_issues(root, issues)
 
     for directory in sorted(root.rglob("*")):
         if directory.is_dir() and _is_empty_dir(directory):
@@ -187,6 +220,59 @@ def _extend_source_card_issues(root: Path, source_card: Path, issues: list[LintI
             )
 
 
+def _extend_entity_issues(root: Path, entity_page: Path, issues: list[LintIssue]) -> None:
+    relative = entity_page.relative_to(root).as_posix()
+    text = entity_page.read_text(encoding="utf-8")
+    metadata, _body = parse_frontmatter(text)
+    if _contains_any(text, FORBIDDEN_ENTITY_TERMS):
+        issues.append(
+            LintIssue(
+                "warning",
+                "forbidden-entity-judgment",
+                relative,
+                "Entity pages should avoid conclusion-style personal judgments.",
+            )
+        )
+    relationships = metadata.get("relationships")
+    if isinstance(relationships, list):
+        for relationship in relationships:
+            if not isinstance(relationship, dict):
+                continue
+            if not relationship.get("source_path"):
+                issues.append(
+                    LintIssue(
+                        "error",
+                        "relationship-missing-source-path",
+                        relative,
+                        "Relationship entries must include source_path.",
+                    )
+                )
+
+
+def _extend_alias_collision_issues(root: Path, issues: list[LintIssue]) -> None:
+    alias_owners: dict[str, set[str]] = {}
+    entities_root = root / "ai_kb/wiki/entities"
+    if not entities_root.exists():
+        return
+    for page in sorted(entities_root.rglob("*.md")):
+        if page.name.startswith("_"):
+            continue
+        metadata, _body = parse_frontmatter(page.read_text(encoding="utf-8"))
+        entity_id = str(metadata.get("entity_id") or page.stem).strip()
+        for alias in _string_values(metadata.get("aliases")):
+            alias_owners.setdefault(alias.casefold(), set()).add(entity_id)
+    for alias, owners in sorted(alias_owners.items()):
+        if len(owners) > 1:
+            issues.append(
+                LintIssue(
+                    "error",
+                    "duplicate-entity-alias",
+                    "ai_kb/wiki/entities",
+                    f"Alias {alias!r} maps to multiple entity ids: {', '.join(sorted(owners))}.",
+                )
+            )
+
+
 def _extend_link_issues(root: Path, page: Path, issues: list[LintIssue]) -> None:
     for link in extract_markdown_links(page):
         target = resolve_link(page, link.target, root)
@@ -211,3 +297,16 @@ def _extend_tag_issues(root: Path, page: Path, issues: list[LintIssue]) -> None:
                 message,
             )
         )
+
+
+def _contains_any(text: str, terms: tuple[str, ...]) -> bool:
+    folded = text.casefold()
+    return any(term.casefold() in folded for term in terms)
+
+
+def _string_values(value: object) -> list[str]:
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, str) and value.strip():
+        return [item.strip() for item in value.split(",") if item.strip()]
+    return []

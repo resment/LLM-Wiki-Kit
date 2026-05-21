@@ -31,6 +31,10 @@ Use `linta prompt ingest` to produce instructions for Codex, Hermes, Claude Code
 agent. The prompt tells the agent to update wiki pages, source cards, manifest, log, and
 `current_draft/` when appropriate.
 
+For focused entity maintenance, use `linta prompt entities <kb_root> <raw_source>`. This prompt
+asks the agent to update compiled people, team, product-line, alias, and project-map context while
+keeping semantic extraction source-backed and outside `ai_kb/wiki/current/`.
+
 ## 5. Add Reading Tags
 
 Use `linta tags add` or `linta tags set` on wiki Markdown pages to add Obsidian-readable
@@ -50,7 +54,8 @@ Run:
 linta index build ./YourKnowledgeBase
 ```
 
-Indexes are written under `ai_kb/wiki/indexes/` for tools. They are derived artifacts, not the
+Indexes are written under `ai_kb/wiki/indexes/` for tools. They include source, project,
+capability, tag, entity, relationship, and project-map indexes. They are derived artifacts, not the
 source of truth.
 
 ## 7. Confirm Current State

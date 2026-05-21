@@ -12,6 +12,7 @@ Linta has three layers:
 - `manifest.py`: scans raw Markdown files and writes `source_manifest.md`.
 - `source_card.py`: creates a structured source-card template for a raw source path.
 - `prompts.py`: renders prompts for external agents.
+- `indexes.py`: builds derived JSON indexes, including entity and relationship context.
 - `linting.py`: runs deterministic checks without calling an LLM.
 - `export.py`: copies confirmed current pages into `export_for_ai/current/`.
 - `mini_kb.py`: creates task-specific mini-kb drafts.
@@ -19,8 +20,13 @@ Linta has three layers:
 ## Data Flow
 
 Raw files enter `ai_kb/raw/`. Deterministic CLI tools register them in the manifest and create
-source-card shells. An external agent can then use rendered prompts to compile wiki pages and
-current drafts. Humans confirm current state. Export commands only read confirmed current pages.
+source-card shells. An external agent can then use rendered prompts to compile wiki pages, entity
+context, and current drafts. Humans confirm current state. Export commands only read confirmed
+current pages.
+
+Entity context lives under `ai_kb/wiki/entities/` and `ai_kb/wiki/portfolio/project_map.md`.
+Linta indexes this context deterministically, but the semantic extraction of people, teams,
+product lines, aliases, and source-backed behavior patterns remains an agent workflow.
 
 ## Boundaries
 
