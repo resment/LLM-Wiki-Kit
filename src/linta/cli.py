@@ -50,7 +50,7 @@ from linta.prompts import (
     render_tag_prompt,
 )
 from linta.raw_import import RAW_SOURCE_TYPES, import_raw_source
-from linta.remote_mcp import RemoteMcpConfig, RemoteMcpError, serve_remote_mcp, token_from_env
+from linta.remote_mcp import RemoteMcpConfig, RemoteMcpError, remote_auth_from_env, serve_remote_mcp
 from linta.source_card import create_source_card
 from linta.tags import add_tags_to_file, list_tags, set_tags_in_file
 
@@ -558,26 +558,38 @@ def mcp_serve_http(
     port: Annotated[int, typer.Option("--port", help="HTTP bind port.")] = 8765,
     token_env: Annotated[
         str,
-        typer.Option("--token-env", help="Environment variable containing the bearer token."),
+        typer.Option(
+            "--token-env", help="Environment variable containing an optional bearer token."
+        ),
     ] = "LINTA_REMOTE_MCP_TOKEN",
+    public_base_url: Annotated[
+        str | None,
+        typer.Option("--public-base-url", help="Public HTTPS base URL for OAuth discovery."),
+    ] = None,
     path: Annotated[str, typer.Option("--path", help="HTTP MCP endpoint path.")] = "/mcp",
 ) -> None:
-    """Serve a token-protected remote MCP adapter over HTTP."""
+    """Serve a token- or OAuth-protected remote MCP adapter over HTTP."""
 
     try:
-        token = token_from_env(token_env)
+        auth = remote_auth_from_env(token_env=token_env, public_base_url=public_base_url)
     except RemoteMcpError as error:
         console.print(f"[red]Error:[/red] {error}")
         raise typer.Exit(code=2) from error
     console.print(f"Serving Linta remote MCP on http://{host}:{port}{path}")
+    if auth.public_base_url:
+        console.print(f"OAuth public base URL: {auth.public_base_url}")
     serve_remote_mcp(
         RemoteMcpConfig(
             kb_root=kb_root,
             agent=agent,
             host=host,
             port=port,
-            token=token,
+            token=auth.token,
             path=path,
+            public_base_url=auth.public_base_url,
+            oauth_client_id=auth.oauth_client_id,
+            oauth_client_secret=auth.oauth_client_secret,
+            oauth_approval_token=auth.oauth_approval_token,
         )
     )
 

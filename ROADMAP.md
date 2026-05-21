@@ -4,7 +4,7 @@
 
 Implemented:
 
-- Token-protected remote MCP HTTP endpoint for Claude custom connectors.
+- OAuth-capable remote MCP HTTP endpoint for Claude custom connectors.
 - Policy-gated safe write tools for current drafts and patch proposals.
 - Remote connector documentation with placeholder-only deployment values.
 - README / README_CN updates for local Claude Desktop versus remote Claude App usage.

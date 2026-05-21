@@ -1,5 +1,17 @@
 # Linta（灵台）
 
+<p align="center">
+  <img src="assets/linta-promo-en-01-4k.jpg" alt="Linta: make your knowledge base legible to AI" width="100%">
+</p>
+
+<p align="center">
+  <img src="assets/linta-promo-en-02-4k.jpg" alt="Linta context gap and pipeline" width="49%">
+  <img src="assets/linta-promo-en-03-4k.jpg" alt="Linta memory layer for AI tools" width="49%">
+</p>
+<p align="center">
+  <img src="assets/linta-promo-en-04-4k.jpg" alt="Two ways to maintain your Linta knowledge base" width="49%">
+</p>
+
 `Linta`（中文名：灵台） helps you turn scattered notes, meeting transcripts, documents, and AI
 conversations into a knowledge base that future AI assistants can actually understand.
 
@@ -71,7 +83,7 @@ For local development after cloning this repository, use `pip install -e ".[dev]
 
 ## Current Release
 
-v0.3.7 adds a token-protected remote MCP HTTP endpoint for Claude custom connectors, plus
+v0.3.7 adds an OAuth-capable remote MCP HTTP endpoint for Claude custom connectors, plus
 policy-gated draft and patch proposal tools. It also keeps the v0.3 line features: deterministic
 scaffolding, manifest scanning, source-card templates, prompt rendering, linting, current export,
 mini-kb draft generation, optional Hermes skills, Obsidian-friendly Markdown tags,
@@ -150,8 +162,8 @@ v0.3.3 adds practical Claude Desktop MCP context tools for overview, search, rea
 v0.3.4 adds Claude Project instructions for practical Linta MCP usage.
 v0.3.5 adds context freshness signals for Claude Desktop MCP overview and bundles.
 v0.3.6 adds entity context, focused entity prompts, and entity relationship indexes.
-v0.3.7 adds token-protected remote MCP serving for Claude custom connectors and safe draft/patch
-write tools.
+v0.3.7 adds OAuth-capable remote MCP serving for Claude custom connectors and safe draft/patch write
+tools.
 
 ## Verify Installation
 
@@ -226,7 +238,10 @@ using Claude Desktop's local config mechanism. To make Linta available from anyw
 HTTP MCP endpoint somewhere Claude can reach:
 
 ```bash
-export LINTA_REMOTE_MCP_TOKEN="replace-with-a-private-token"
+export LINTA_REMOTE_MCP_PUBLIC_BASE_URL="https://your-linta.example.com"
+export LINTA_OAUTH_CLIENT_ID="replace-with-client-id"
+export LINTA_OAUTH_CLIENT_SECRET="replace-with-client-secret"
+export LINTA_OAUTH_APPROVAL_TOKEN="replace-with-private-approval-token"
 linta mcp serve-http --kb-root ./MyKnowledgeBase --host 127.0.0.1 --port 8765
 ```
 
@@ -237,8 +252,18 @@ endpoint to Claude as a custom connector:
 https://your-linta.example.com/mcp
 ```
 
-Do not commit real domains, IP addresses, tokens, client secrets, or personal knowledge-base paths.
-Use `.env` or your deployment secret store for `LINTA_REMOTE_MCP_TOKEN`.
+In Claude's connector form, use:
+
+```text
+Name: Linta
+Remote MCP server URL: https://your-linta.example.com/mcp
+OAuth Client ID: replace-with-client-id
+OAuth Client Secret: replace-with-client-secret
+```
+
+When Claude opens the Linta authorization page, enter `LINTA_OAUTH_APPROVAL_TOKEN`. Do not commit
+real domains, IP addresses, tokens, client secrets, or personal knowledge-base paths. Use `.env` or
+your deployment secret store for private values. `.env.example` contains placeholder names only.
 
 Remote write tools are exposed only when the configured agent has `mode: write` in
 `.linta/agent_access.yaml`. The built-in write tools are intentionally narrow:

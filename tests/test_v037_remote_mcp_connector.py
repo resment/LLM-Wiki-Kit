@@ -7,7 +7,16 @@ from linta.agent_access import configure_agent_access, set_agent_access
 from linta.cli import app
 from linta.init_kb import init_knowledge_base
 from linta.mcp_server import ReadOnlyMcpServer
-from linta.remote_mcp import _is_authorized, handle_remote_jsonrpc, token_from_env
+from linta.remote_mcp import (
+    OAuthMemoryStore,
+    RemoteMcpConfig,
+    _authorization_server_metadata,
+    _is_authorized,
+    _protected_resource_metadata,
+    handle_remote_jsonrpc,
+    remote_auth_from_env,
+    token_from_env,
+)
 
 runner = CliRunner()
 
@@ -103,6 +112,45 @@ def test_remote_mcp_auth_helper_and_jsonrpc_handler(tmp_path: Path) -> None:
     assert any(tool["name"] == "context_overview" for tool in payload["result"]["tools"])
 
 
+def test_oauth_metadata_and_access_token_validation() -> None:
+    config = RemoteMcpConfig(
+        kb_root=Path("."),
+        agent="claude-desktop",
+        host="127.0.0.1",
+        port=8765,
+        token=None,
+        public_base_url="https://linta.example.com",
+        oauth_client_id="client-id",
+        oauth_client_secret="client-secret",
+        oauth_approval_token="approval-token",
+    )
+
+    resource = _protected_resource_metadata(config)
+    auth_server = _authorization_server_metadata(config)
+
+    assert resource["resource"] == "https://linta.example.com/mcp"
+    assert resource["authorization_servers"] == ["https://linta.example.com"]
+    assert auth_server["authorization_endpoint"] == "https://linta.example.com/oauth/authorize"
+    assert auth_server["token_endpoint"] == "https://linta.example.com/oauth/token"
+
+    store = OAuthMemoryStore()
+    code = store.create_code(
+        client_id="client-id",
+        redirect_uri="https://claude.ai/api/mcp/auth_callback",
+        code_challenge="verifier",
+        code_challenge_method="plain",
+        scope="linta:read",
+    )
+    access_token = store.exchange_code(
+        code=code,
+        client_id="client-id",
+        redirect_uri="https://claude.ai/api/mcp/auth_callback",
+        code_verifier="verifier",
+    )
+
+    assert _is_authorized(f"Bearer {access_token}", None, oauth_store=store)
+
+
 def test_remote_token_env_and_cli_error(monkeypatch) -> None:
     monkeypatch.setenv("LINTA_REMOTE_MCP_TOKEN", "token")
     assert token_from_env() == "token"
@@ -111,4 +159,18 @@ def test_remote_token_env_and_cli_error(monkeypatch) -> None:
     result = runner.invoke(app, ["mcp", "serve-http", "--kb-root", "."])
 
     assert result.exit_code == 2
-    assert "Missing bearer token" in result.output
+    assert "Missing auth configuration" in result.output
+
+
+def test_remote_auth_from_env_accepts_oauth_without_bearer(monkeypatch) -> None:
+    monkeypatch.delenv("LINTA_REMOTE_MCP_TOKEN", raising=False)
+    monkeypatch.setenv("LINTA_REMOTE_MCP_PUBLIC_BASE_URL", "https://linta.example.com")
+    monkeypatch.setenv("LINTA_OAUTH_CLIENT_ID", "client-id")
+    monkeypatch.setenv("LINTA_OAUTH_CLIENT_SECRET", "client-secret")
+    monkeypatch.setenv("LINTA_OAUTH_APPROVAL_TOKEN", "approval-token")
+
+    auth = remote_auth_from_env()
+
+    assert auth.token is None
+    assert auth.public_base_url == "https://linta.example.com"
+    assert auth.oauth_client_id == "client-id"

@@ -25,10 +25,13 @@ HTTPS and access controls in front of it.
 
 ## Start the Endpoint
 
-Set a private bearer token outside the repository:
+Set private OAuth values outside the repository:
 
 ```bash
-export LINTA_REMOTE_MCP_TOKEN="replace-with-a-private-token"
+export LINTA_REMOTE_MCP_PUBLIC_BASE_URL="https://your-linta.example.com"
+export LINTA_OAUTH_CLIENT_ID="replace-with-client-id"
+export LINTA_OAUTH_CLIENT_SECRET="replace-with-client-secret"
+export LINTA_OAUTH_APPROVAL_TOKEN="replace-with-private-approval-token"
 linta mcp serve-http \
   --kb-root /path/to/YourKnowledgeBase \
   --host 127.0.0.1 \
@@ -52,17 +55,27 @@ or personal knowledge-base path.
 
 ## Auth Boundary
 
-Every `POST /mcp` request must include:
+Claude custom connectors use OAuth. Configure Claude with:
 
-```http
-Authorization: Bearer <token>
+```text
+Name: Linta
+Remote MCP server URL: https://your-linta.example.com/mcp
+OAuth Client ID: replace-with-client-id
+OAuth Client Secret: replace-with-client-secret
 ```
 
-The token value is read from `LINTA_REMOTE_MCP_TOKEN` by default. You can choose another variable:
+When Claude opens the Linta authorization page, enter the private value from
+`LINTA_OAUTH_APPROVAL_TOKEN`. Linta then issues an OAuth bearer token to Claude. Tokens are stored
+in memory; after restarting `linta mcp serve-http`, reconnect the Claude connector.
+
+The server also supports a direct bearer token for non-Claude clients that can send custom headers:
 
 ```bash
-linta mcp serve-http --kb-root /path/to/YourKnowledgeBase --token-env MY_PRIVATE_TOKEN
+export LINTA_REMOTE_MCP_TOKEN="replace-with-private-bearer-token"
 ```
+
+Claude's custom connector form does not provide a generic `Authorization` header field, so use the
+OAuth settings for Claude.
 
 ## Claude Setup
 
@@ -72,9 +85,9 @@ In Claude, add a custom connector with the public HTTPS URL:
 https://your-linta.example.com/mcp
 ```
 
-If your Claude plan or organization flow requires OAuth instead of a static connector credential,
-add an OAuth layer in front of the Linta service. Keep the token between that auth layer and Linta
-private.
+Fill the advanced OAuth Client ID and OAuth Client Secret fields with the values from your private
+environment. Mobile clients can use connectors already added through Claude Desktop or claude.ai,
+but cannot add new custom servers directly.
 
 ## Read Tools
 
