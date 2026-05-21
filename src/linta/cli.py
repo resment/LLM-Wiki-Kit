@@ -50,6 +50,7 @@ from linta.prompts import (
     render_tag_prompt,
 )
 from linta.raw_import import RAW_SOURCE_TYPES, import_raw_source
+from linta.remote_mcp import RemoteMcpConfig, RemoteMcpError, serve_remote_mcp, token_from_env
 from linta.source_card import create_source_card
 from linta.tags import add_tags_to_file, list_tags, set_tags_in_file
 
@@ -518,8 +519,7 @@ def claude_desktop_status(
         console.print(f"Read scope: {status.read_scope}")
         console.print(f"KB OK: {status.kb_ok}")
         console.print(
-            "Project instructions: "
-            f"linta claude-desktop project-instructions {status.kb_root}"
+            f"Project instructions: linta claude-desktop project-instructions {status.kb_root}"
         )
         for warning in status.warnings:
             console.print(f"[yellow]Warning:[/yellow] {warning}")
@@ -548,6 +548,38 @@ def mcp_serve(
     """Serve a read-only stdio MCP adapter."""
 
     serve_mcp_stdio(kb_root=kb_root, agent=agent)
+
+
+@mcp_app.command("serve-http")
+def mcp_serve_http(
+    kb_root: Annotated[Path, typer.Option("--kb-root", help="Knowledge base root.")],
+    agent: Annotated[str, typer.Option("--agent", help="MCP agent name.")] = "claude-desktop",
+    host: Annotated[str, typer.Option("--host", help="HTTP bind host.")] = "127.0.0.1",
+    port: Annotated[int, typer.Option("--port", help="HTTP bind port.")] = 8765,
+    token_env: Annotated[
+        str,
+        typer.Option("--token-env", help="Environment variable containing the bearer token."),
+    ] = "LINTA_REMOTE_MCP_TOKEN",
+    path: Annotated[str, typer.Option("--path", help="HTTP MCP endpoint path.")] = "/mcp",
+) -> None:
+    """Serve a token-protected remote MCP adapter over HTTP."""
+
+    try:
+        token = token_from_env(token_env)
+    except RemoteMcpError as error:
+        console.print(f"[red]Error:[/red] {error}")
+        raise typer.Exit(code=2) from error
+    console.print(f"Serving Linta remote MCP on http://{host}:{port}{path}")
+    serve_remote_mcp(
+        RemoteMcpConfig(
+            kb_root=kb_root,
+            agent=agent,
+            host=host,
+            port=port,
+            token=token,
+            path=path,
+        )
+    )
 
 
 @hermes_app.command("install-skills")

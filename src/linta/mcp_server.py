@@ -35,6 +35,11 @@ READ_ONLY_TOOLS = (
     "context_bundle",
 )
 
+SAFE_WRITE_TOOLS = (
+    "write_current_draft",
+    "propose_wiki_patch",
+)
+
 PRACTICAL_CONTEXT_TOOLS = (
     "context_overview",
     "context_search",
@@ -58,7 +63,7 @@ class ReadOnlyMcpServer:
         self.policy = read_agent_policy(self.kb_root, agent)
 
     def list_tools(self) -> list[dict[str, Any]]:
-        return [
+        tools = [
             _tool(
                 "doctor",
                 "Run read-only Linta diagnostics.",
@@ -124,9 +129,38 @@ class ReadOnlyMcpServer:
                 },
             ),
         ]
+        if self.policy.mode == "write":
+            tools.extend(
+                [
+                    _tool(
+                        "write_current_draft",
+                        "Write one Markdown draft under ai_kb/wiki/current_draft only.",
+                        {
+                            "path": {"type": "string"},
+                            "content": {"type": "string"},
+                        },
+                        required=["path", "content"],
+                    ),
+                    _tool(
+                        "propose_wiki_patch",
+                        (
+                            "Store a human-reviewable patch proposal under "
+                            "ai_kb/wiki/current_draft/patches."
+                        ),
+                        {
+                            "title": {"type": "string"},
+                            "target_path": {"type": "string"},
+                            "patch": {"type": "string"},
+                            "notes": {"type": "string"},
+                        },
+                        required=["title", "target_path", "patch"],
+                    ),
+                ]
+            )
+        return tools
 
     def call_tool(self, name: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
-        if name not in READ_ONLY_TOOLS:
+        if name not in READ_ONLY_TOOLS and name not in SAFE_WRITE_TOOLS:
             raise McpError(f"Unknown or disallowed tool: {name}")
         args = arguments or {}
         if name == "doctor":
@@ -164,6 +198,22 @@ class ReadOnlyMcpServer:
                     query=str(args.get("query") or ""),
                     paths=args.get("paths"),
                     limit=_limit(args.get("limit")),
+                )
+            )
+        if name == "write_current_draft":
+            return _json_result(
+                self._write_current_draft(
+                    str(args.get("path") or ""),
+                    str(args.get("content") or ""),
+                )
+            )
+        if name == "propose_wiki_patch":
+            return _json_result(
+                self._propose_wiki_patch(
+                    title=str(args.get("title") or ""),
+                    target_path=str(args.get("target_path") or ""),
+                    patch=str(args.get("patch") or ""),
+                    notes=str(args.get("notes") or ""),
                 )
             )
         raise McpError(f"Unhandled tool: {name}")
@@ -415,6 +465,83 @@ class ReadOnlyMcpServer:
             path = Path("ai_kb/wiki/source_cards") / path
         return self._read_allowed(path.as_posix())
 
+    def _write_current_draft(self, requested_path: str, content: str) -> dict[str, Any]:
+        self._require_write_policy()
+        relative = _normalize_current_draft_path(requested_path)
+        path = (self.kb_root / relative).resolve()
+        if not _is_relative_to(path, (self.kb_root / "ai_kb/wiki/current_draft").resolve()):
+            raise McpError(f"Draft write not allowed: {requested_path}")
+        if not content.strip():
+            raise McpError("Draft content must not be empty.")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+        return {
+            "path": path.relative_to(self.kb_root).as_posix(),
+            "bytes": len(content.encode("utf-8")),
+            "message": "Wrote current draft. Review before promoting to ai_kb/wiki/current.",
+        }
+
+    def _propose_wiki_patch(
+        self,
+        *,
+        title: str,
+        target_path: str,
+        patch: str,
+        notes: str,
+    ) -> dict[str, Any]:
+        self._require_write_policy()
+        if not title.strip():
+            raise McpError("Patch title must not be empty.")
+        if not patch.strip():
+            raise McpError("Patch content must not be empty.")
+        if not target_path.strip():
+            raise McpError("Patch target_path must not be empty.")
+        target = Path(target_path)
+        if target.is_absolute() or ".." in target.parts:
+            raise McpError(f"Patch target path not allowed: {target_path}")
+        if not target.parts or target.as_posix() == ".":
+            raise McpError(f"Patch target path not allowed: {target_path}")
+        if target.parts[:2] == ("ai_kb", "raw") or target.parts[0] in {"human", "archive"}:
+            raise McpError(f"Patch target path not allowed: {target_path}")
+        patch_root = self.kb_root / "ai_kb/wiki/current_draft/patches"
+        filename = f"{_slug(title)}.patch.md"
+        path = (patch_root / filename).resolve()
+        if not _is_relative_to(path, patch_root.resolve()):
+            raise McpError("Patch path escaped patch directory.")
+        body = "\n".join(
+            [
+                "---",
+                f"title: {json.dumps(title.strip(), ensure_ascii=True)}",
+                f"target_path: {json.dumps(target.as_posix(), ensure_ascii=True)}",
+                "status: proposed",
+                "---",
+                "",
+                f"# {title.strip()}",
+                "",
+                "## Notes",
+                "",
+                notes.strip() or "No notes provided.",
+                "",
+                "## Patch",
+                "",
+                "```diff",
+                patch.rstrip(),
+                "```",
+                "",
+            ]
+        )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(body, encoding="utf-8")
+        return {
+            "path": path.relative_to(self.kb_root).as_posix(),
+            "target_path": target.as_posix(),
+            "message": "Stored patch proposal. Review before applying.",
+        }
+
+    def _require_write_policy(self) -> None:
+        if self.policy.mode != "write":
+            raise McpError(f"Agent {self.agent} is read-only.")
+
 
 def serve_mcp_stdio(*, kb_root: Path, agent: str) -> None:
     server = ReadOnlyMcpServer(kb_root=kb_root, agent=agent)
@@ -518,6 +645,43 @@ def _content_type(relative_path: str) -> str:
     if relative_path.startswith("ai_kb/schema/"):
         return "schema"
     return "wiki_context"
+
+
+def _normalize_current_draft_path(requested_path: str) -> str:
+    if not requested_path.strip():
+        raise McpError("Draft path must not be empty.")
+    path = Path(requested_path)
+    if path.is_absolute() or ".." in path.parts:
+        raise McpError(f"Draft path not allowed: {requested_path}")
+    if path.suffix != ".md":
+        raise McpError("Draft path must end with .md.")
+    if path.parts[:3] == ("ai_kb", "wiki", "current_draft"):
+        return path.as_posix()
+    if path.parts and path.parts[0] in {"ai_kb", "human", "archive"}:
+        raise McpError(f"Draft path not allowed: {requested_path}")
+    return (Path("ai_kb/wiki/current_draft") / path).as_posix()
+
+
+def _slug(value: str) -> str:
+    result = []
+    previous_dash = False
+    for character in value.strip().lower():
+        if character.isascii() and character.isalnum():
+            result.append(character)
+            previous_dash = False
+        elif not previous_dash:
+            result.append("-")
+            previous_dash = True
+    slug = "".join(result).strip("-")
+    return slug or "patch"
+
+
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+    except ValueError:
+        return False
+    return True
 
 
 def _freshness_warnings(kb_root: Path, issues: list[Any]) -> list[str]:

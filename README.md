@@ -53,7 +53,8 @@ a Linta knowledge base. The matching command is shown for users who want to run 
 | "Build a small context pack for this project review." | `linta mini-kb create ./MyKnowledgeBase --topic "Project" --purpose "Review prep"` | Creates a compact mini knowledge base for one task. |
 | "Check whether my knowledge base is healthy." | `linta doctor ./MyKnowledgeBase` | Checks layout, required files, and setup health. |
 | "What changed recently and what needs maintenance?" | `linta maintenance daily ./MyKnowledgeBase` | Finds new raw sources, missing source cards, and lint issues. |
-| "Make this knowledge base readable by Claude Desktop." | `linta claude-desktop config ./MyKnowledgeBase` | Prints the read-only MCP config snippet. |
+| "Make this knowledge base readable by Claude Desktop." | `linta claude-desktop config ./MyKnowledgeBase` | Prints the local read-only MCP config snippet. |
+| "Serve this knowledge base as a remote Claude connector." | `linta mcp serve-http --kb-root ./MyKnowledgeBase` | Starts a token-protected remote MCP endpoint. |
 | "Export confirmed current knowledge for other AI tools." | `linta export current ./MyKnowledgeBase` | Copies reviewed current pages into the export layer. |
 
 ## Quick Start
@@ -70,11 +71,12 @@ For local development after cloning this repository, use `pip install -e ".[dev]
 
 ## Current Release
 
-v0.3.6 adds entity context for people, teams, product lines, aliases, time-sliced relationships, and
-project maps. It also keeps the v0.3 line features: deterministic scaffolding, manifest scanning,
-source-card templates, prompt rendering, linting, current export, mini-kb draft generation, optional
-Hermes skills, Obsidian-friendly Markdown tags, machine-readable indexes, doctor diagnostics,
-multi-agent access profiles, and Claude Desktop read-only MCP practical context tools.
+v0.3.7 adds a token-protected remote MCP HTTP endpoint for Claude custom connectors, plus
+policy-gated draft and patch proposal tools. It also keeps the v0.3 line features: deterministic
+scaffolding, manifest scanning, source-card templates, prompt rendering, linting, current export,
+mini-kb draft generation, optional Hermes skills, Obsidian-friendly Markdown tags,
+machine-readable indexes, doctor diagnostics, multi-agent access profiles, entity context, and
+Claude Desktop MCP practical context tools.
 
 Linta does not call an LLM API by default. It gives your chosen agent a safe structure and prompts;
 the source-backed semantic writing happens in your agent environment.
@@ -122,6 +124,7 @@ linta claude-desktop config ./MyKnowledgeBase
 linta claude-desktop status ./MyKnowledgeBase
 linta claude-desktop project-instructions ./MyKnowledgeBase
 linta mcp serve --agent claude-desktop --kb-root ./MyKnowledgeBase
+linta mcp serve-http --kb-root ./MyKnowledgeBase --host 127.0.0.1 --port 8765
 linta prompt lint-ai ./MyKnowledgeBase
 linta lint ./MyKnowledgeBase
 linta export current ./MyKnowledgeBase
@@ -147,6 +150,8 @@ v0.3.3 adds practical Claude Desktop MCP context tools for overview, search, rea
 v0.3.4 adds Claude Project instructions for practical Linta MCP usage.
 v0.3.5 adds context freshness signals for Claude Desktop MCP overview and bundles.
 v0.3.6 adds entity context, focused entity prompts, and entity relationship indexes.
+v0.3.7 adds token-protected remote MCP serving for Claude custom connectors and safe draft/patch
+write tools.
 
 ## Verify Installation
 
@@ -212,6 +217,37 @@ raw sources.
 current context, missing source cards, manifest inconsistency, stale current pages, and lint errors.
 If warnings are present, Claude should ask the primary writer Agent to run `linta maintenance daily`
 before relying on the context.
+
+## Remote Claude Connector
+
+Claude App, Claude Desktop web connectors, and Claude mobile use remote MCP connectors through
+Anthropic's cloud infrastructure. They cannot use a private local `stdio` server unless you are
+using Claude Desktop's local config mechanism. To make Linta available from anywhere, deploy the
+HTTP MCP endpoint somewhere Claude can reach:
+
+```bash
+export LINTA_REMOTE_MCP_TOKEN="replace-with-a-private-token"
+linta mcp serve-http --kb-root ./MyKnowledgeBase --host 127.0.0.1 --port 8765
+```
+
+Put a reverse proxy or tunnel with HTTPS in front of that local process, then add only the public
+endpoint to Claude as a custom connector:
+
+```text
+https://your-linta.example.com/mcp
+```
+
+Do not commit real domains, IP addresses, tokens, client secrets, or personal knowledge-base paths.
+Use `.env` or your deployment secret store for `LINTA_REMOTE_MCP_TOKEN`.
+
+Remote write tools are exposed only when the configured agent has `mode: write` in
+`.linta/agent_access.yaml`. The built-in write tools are intentionally narrow:
+
+- `write_current_draft` writes Markdown only under `ai_kb/wiki/current_draft/`.
+- `propose_wiki_patch` stores a reviewable patch note under `ai_kb/wiki/current_draft/patches/`.
+
+They do not edit `ai_kb/raw/`, `human/`, or `archive/`, and they do not promote drafts into
+`ai_kb/wiki/current/`.
 
 ## Obsidian Tags and Indexes
 

@@ -14,7 +14,7 @@ def test_project_metadata_is_release_ready() -> None:
     project = metadata["project"]
 
     assert project["name"] == "linta"
-    assert project["version"] == "0.3.6"
+    assert project["version"] == "0.3.7"
     assert project["requires-python"] == ">=3.11"
     assert project["license"]["text"] == "PolyForm-Noncommercial-1.0.0"
     assert "linta" in project["scripts"]
@@ -38,15 +38,11 @@ def test_manifest_includes_public_assets() -> None:
     assert "recursive-include examples *.md" in manifest
     assert "assets/hermes/skills/*/*.md" in setuptools_config["package-data"]["linta"]
     assert (REPO_ROOT / "src/linta/assets/hermes/skills/build_indexes/SKILL.md").is_file()
-    assert (
-        REPO_ROOT / "src/linta/assets/hermes/skills/manage_obsidian_tags/SKILL.md"
-    ).is_file()
+    assert (REPO_ROOT / "src/linta/assets/hermes/skills/manage_obsidian_tags/SKILL.md").is_file()
     assert (
         REPO_ROOT / "src/linta/assets/hermes/skills/import_uploaded_raw_source/SKILL.md"
     ).is_file()
-    assert (
-        REPO_ROOT / "src/linta/assets/hermes/skills/daily_maintenance/SKILL.md"
-    ).is_file()
+    assert (REPO_ROOT / "src/linta/assets/hermes/skills/daily_maintenance/SKILL.md").is_file()
     assert "templates/prompts/tag.md" in data_files["templates/prompts"]
     assert "COMMERCIAL.md" in setuptools_config["license-files"]
     assert "CONTRIBUTING.md" in setuptools_config["license-files"]
@@ -98,6 +94,7 @@ def test_readmes_and_roadmap_are_v03_current() -> None:
     assert "agents wizard" in readme_cn
     assert "MCP" in readme
     assert "MCP" in readme_cn
+    assert "v0.3.7 Status" in roadmap
     assert "v0.3.6 Status" in roadmap
     assert "v0.3.5 Status" in roadmap
     assert "v0.3.4 Status" in roadmap

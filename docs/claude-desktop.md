@@ -9,6 +9,10 @@ compiled Linta context inside a Claude Project without reading raw source materi
 v0.3.5 adds freshness signals to `context_overview` and `context_bundle` so Claude can see whether
 indexes, current context, source cards, manifest consistency, and lint health need maintenance.
 
+v0.3.7 adds a separate remote MCP HTTP endpoint for Claude custom connectors. Use
+`docs/remote-connector.md` when Claude App, Claude mobile, or Claude Desktop web connectors need
+to reach Linta from outside the local machine.
+
 ## Configure Agent Access
 
 Create an access policy inside the knowledge base:
@@ -116,3 +120,7 @@ linta doctor /path/to/YourKnowledgeBase
 The read-only guarantee applies to the Linta MCP adapter. If Claude Desktop is separately
 given a filesystem or shell MCP server with write access to the same directory, that external server
 is outside Linta's enforcement boundary.
+
+Local `stdio` MCP servers configured through Claude Desktop are not available to Claude App or
+mobile clients. For those clients, deploy the remote connector endpoint documented in
+`docs/remote-connector.md`.
