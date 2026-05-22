@@ -23,6 +23,7 @@ DEFAULT_OAUTH_CLIENT_ID_ENV = "LINTA_OAUTH_CLIENT_ID"
 DEFAULT_OAUTH_CLIENT_SECRET_ENV = "LINTA_OAUTH_CLIENT_SECRET"
 DEFAULT_OAUTH_APPROVAL_TOKEN_ENV = "LINTA_OAUTH_APPROVAL_TOKEN"
 DEFAULT_OAUTH_PUBLIC_BASE_URL_ENV = "LINTA_REMOTE_MCP_PUBLIC_BASE_URL"
+DEFAULT_OAUTH_TOKEN_STORE_ENV = "LINTA_OAUTH_TOKEN_STORE"
 OAUTH_ACCESS_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30
 OAUTH_AUTHORIZATION_CODE_TTL_SECONDS = 60 * 10
 
@@ -39,6 +40,7 @@ class RemoteMcpConfig:
     oauth_client_id: str | None = None
     oauth_client_secret: str | None = None
     oauth_approval_token: str | None = None
+    oauth_token_store: Path | None = None
 
     @property
     def oauth_enabled(self) -> bool:
@@ -85,9 +87,10 @@ class OAuthAuthorizationCode:
 class OAuthMemoryStore:
     """In-memory OAuth state for a single-user connector process."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, token_store_path: Path | None = None) -> None:
+        self.token_store_path = token_store_path
         self._codes: dict[str, OAuthAuthorizationCode] = {}
-        self._tokens: dict[str, float] = {}
+        self._tokens: dict[str, float] = self._load_tokens()
 
     def create_code(
         self,
@@ -126,17 +129,53 @@ class OAuthMemoryStore:
             raise RemoteMcpError("Authorization code metadata mismatch.")
         _verify_pkce(record, code_verifier)
         access_token = token_urlsafe(32)
-        self._tokens[access_token] = time.time() + OAUTH_ACCESS_TOKEN_TTL_SECONDS
+        self._tokens[_hash_token(access_token)] = time.time() + OAUTH_ACCESS_TOKEN_TTL_SECONDS
+        self._save_tokens()
         return access_token
 
     def validate_access_token(self, access_token: str) -> bool:
-        expires_at = self._tokens.get(access_token)
+        token_hash = _hash_token(access_token)
+        expires_at = self._tokens.get(token_hash)
         if expires_at is None:
             return False
         if expires_at < time.time():
-            self._tokens.pop(access_token, None)
+            self._tokens.pop(token_hash, None)
+            self._save_tokens()
             return False
         return True
+
+    def _load_tokens(self) -> dict[str, float]:
+        if self.token_store_path is None or not self.token_store_path.exists():
+            return {}
+        try:
+            raw = json.loads(self.token_store_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        now = time.time()
+        tokens = raw.get("tokens") if isinstance(raw, dict) else {}
+        if not isinstance(tokens, dict):
+            return {}
+        return {
+            str(token_hash): float(expires_at)
+            for token_hash, expires_at in tokens.items()
+            if float(expires_at) > now
+        }
+
+    def _save_tokens(self) -> None:
+        if self.token_store_path is None:
+            return
+        now = time.time()
+        self._tokens = {
+            token_hash: expires_at
+            for token_hash, expires_at in self._tokens.items()
+            if expires_at > now
+        }
+        self.token_store_path.parent.mkdir(parents=True, exist_ok=True)
+        self.token_store_path.write_text(
+            json.dumps({"tokens": self._tokens}, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        self.token_store_path.chmod(0o600)
 
 
 def remote_auth_from_env(
@@ -183,7 +222,11 @@ def make_remote_mcp_http_server(config: RemoteMcpConfig) -> ThreadingHTTPServer:
     """Build a remote MCP HTTP server without starting it."""
 
     mcp_server = ReadOnlyMcpServer(kb_root=config.kb_root, agent=config.agent)
-    handler = _build_handler(mcp_server=mcp_server, config=config, oauth_store=OAuthMemoryStore())
+    handler = _build_handler(
+        mcp_server=mcp_server,
+        config=config,
+        oauth_store=OAuthMemoryStore(token_store_path=_oauth_token_store_path(config)),
+    )
     return ThreadingHTTPServer((config.host, config.port), handler)
 
 
@@ -388,6 +431,21 @@ def _is_authorized(
     if token and bearer == token:
         return True
     return oauth_store.validate_access_token(bearer) if oauth_store else False
+
+
+def _hash_token(access_token: str) -> str:
+    return sha256(access_token.encode("utf-8")).hexdigest()
+
+
+def _oauth_token_store_path(config: RemoteMcpConfig) -> Path | None:
+    if not config.oauth_enabled:
+        return None
+    if config.oauth_token_store is not None:
+        return config.oauth_token_store.expanduser().resolve()
+    configured = os.environ.get(DEFAULT_OAUTH_TOKEN_STORE_ENV, "").strip()
+    if configured:
+        return Path(configured).expanduser().resolve()
+    return Path.home() / ".linta-connector/oauth_tokens.json"
 
 
 def _protected_resource_metadata(config: RemoteMcpConfig) -> dict[str, Any]:

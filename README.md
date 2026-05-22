@@ -1,26 +1,26 @@
 # Linta（灵台）
 
-<p align="center">
-  <img src="assets/linta-promo-en-01-4k.jpg" alt="Linta: make your knowledge base legible to AI" width="100%">
-</p>
+<img align="left" src="assets/linta-promo-en-01-4k.jpg" alt="Linta: make your knowledge base legible to AI" width="58%">
 
-<p align="center">
-  <img src="assets/linta-promo-en-02-4k.jpg" alt="Linta context gap and pipeline" width="49%">
-  <img src="assets/linta-promo-en-03-4k.jpg" alt="Linta memory layer for AI tools" width="49%">
-</p>
-<p align="center">
-  <img src="assets/linta-promo-en-04-4k.jpg" alt="Two ways to maintain your Linta knowledge base" width="49%">
-</p>
+### Make your knowledge base legible to AI
 
-`Linta`（中文名：灵台） helps you turn scattered notes, meeting transcripts, documents, and AI
+`Linta` (中文名：灵台) helps you turn scattered notes, meeting transcripts, documents, and AI
 conversations into a knowledge base that future AI assistants can actually understand.
-
-Chinese README: [README_CN.md](README_CN.md)
 
 Most personal or team knowledge bases become hard for AI to use: raw files pile up, people and
 project names drift, old context gets mixed with current truth, and every new chat starts from
 scratch. Linta gives your AI tools a clean, reviewable memory layer built from Markdown files,
 source citations, and explicit human review.
+
+中文版本：[README_CN.md](README_CN.md)
+
+<br clear="left">
+
+<p align="center">
+  <img src="assets/linta-promo-en-02-4k.jpg" alt="Linta context gap and pipeline" width="32%">
+  <img src="assets/linta-promo-en-03-4k.jpg" alt="Linta memory layer for AI tools" width="32%">
+  <img src="assets/linta-promo-en-04-4k.jpg" alt="Two ways to maintain your Linta knowledge base" width="32%">
+</p>
 
 ## Why Linta
 
@@ -80,6 +80,16 @@ Then put files under `ai_kb/raw/`, ask an agent to ingest them with `linta promp
 the generated wiki updates, and export confirmed context when another AI tool needs it.
 
 For local development after cloning this repository, use `pip install -e ".[dev]"`.
+
+## Codex Plugin
+
+This repository includes a local Codex plugin under `plugins/linta`. The plugin provides a `linta`
+skill that tells Codex how to initialize, ingest, lint, index, and export Linta knowledge bases while
+preserving raw sources and avoiding committed private values.
+
+To enable it from a local checkout, add this repository as a local Codex marketplace and enable
+`linta@linta-local` in your private Codex configuration. Keep machine-specific paths in that private
+configuration only; committed plugin files use relative paths and placeholder URLs.
 
 ## Current Release
 

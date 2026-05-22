@@ -1,0 +1,41 @@
+{
+  "name": "linta",
+  "version": "0.1.0",
+  "description": "Use Codex to maintain Linta Markdown knowledge bases with source-backed, deterministic workflows.",
+  "author": {
+    "name": "Linta contributors"
+  },
+  "homepage": "https://github.com/resment/Linta",
+  "repository": "https://github.com/resment/Linta",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "keywords": [
+    "linta",
+    "markdown",
+    "knowledge-base",
+    "codex",
+    "agents"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Linta",
+    "shortDescription": "Maintain AI-readable Markdown knowledge bases",
+    "longDescription": "Linta gives Codex a deterministic workflow for creating, ingesting, linting, indexing, and exporting Markdown knowledge bases without mutating raw source files or committing private deployment values.",
+    "developerName": "Linta contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/resment/Linta",
+    "privacyPolicyURL": "https://github.com/resment/Linta",
+    "termsOfServiceURL": "https://github.com/resment/Linta",
+    "defaultPrompt": [
+      "Check this Linta knowledge base and fix maintenance issues.",
+      "Ingest this source into my Linta wiki.",
+      "Export current Linta context for another AI tool."
+    ],
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}

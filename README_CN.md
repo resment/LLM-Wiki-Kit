@@ -1,21 +1,23 @@
 # 灵台 Linta
 
-<p align="center">
-  <img src="assets/linta-promo-cn-01-4k.jpg" alt="灵台：让 AI 读懂你的知识库" width="100%">
-</p>
+<img align="left" src="assets/linta-promo-cn-01-4k.jpg" alt="灵台：让 AI 读懂你的知识库" width="58%">
 
-<p align="center">
-  <img src="assets/linta-promo-cn-02-4k.jpg" alt="灵台知识库断点和整理流程" width="49%">
-  <img src="assets/linta-promo-cn-03-4k.jpg" alt="灵台给 AI 的知识编译层" width="49%">
-</p>
-<p align="center">
-  <img src="assets/linta-promo-cn-04-4k.jpg" alt="灵台知识库的两种整理方式" width="49%">
-</p>
+### 让 AI 读懂你的知识库
 
 `Linta`，中文名「灵台」，可以把零散笔记、会议实录、文档和 AI 对话整理成一个让后续 AI
 真正读得懂的知识库。
 
 很多个人或团队知识库会慢慢变成 AI 很难使用的资料堆：原始文件越积越多，人名和项目名不断变化，旧语境和当前事实混在一起，每次新对话又要重新解释背景。Linta 提供的是一层基于 Markdown、来源引用和人工 review 的 AI 记忆整理层。
+
+English README：[README.md](README.md)
+
+<br clear="left">
+
+<p align="center">
+  <img src="assets/linta-promo-cn-02-4k.jpg" alt="灵台知识库断点和整理流程" width="32%">
+  <img src="assets/linta-promo-cn-03-4k.jpg" alt="灵台给 AI 的知识编译层" width="32%">
+  <img src="assets/linta-promo-cn-04-4k.jpg" alt="灵台知识库的两种整理方式" width="32%">
+</p>
 
 ## 为什么用 Linta
 
@@ -68,6 +70,13 @@ linta init ./MyKnowledgeBase
 wiki 更新，需要给其他 AI 工具使用时再导出 confirmed context。
 
 如果是 clone 仓库后的本地开发环境，使用 `pip install -e ".[dev]"`。
+
+## Codex 插件
+
+本仓库包含一个本地 Codex 插件，位置是 `plugins/linta`。插件提供 `linta` skill，让 Codex
+按 Linta 的约束创建、导入、lint、构建索引和导出知识库，同时保持 raw source 不被修改，并避免把私有值提交进代码。
+
+本地启用时，把这个仓库添加为 Codex local marketplace，并启用 `linta@linta-local`。机器路径只放在本机私有 Codex 配置里；提交到仓库的插件文件只使用相对路径和占位 URL。
 
 ## 当前版本
 

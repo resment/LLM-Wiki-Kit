@@ -151,6 +151,28 @@ def test_oauth_metadata_and_access_token_validation() -> None:
     assert _is_authorized(f"Bearer {access_token}", None, oauth_store=store)
 
 
+def test_oauth_access_tokens_persist_across_store_restarts(tmp_path: Path) -> None:
+    token_store = tmp_path / "oauth_tokens.json"
+    first_store = OAuthMemoryStore(token_store_path=token_store)
+    code = first_store.create_code(
+        client_id="client-id",
+        redirect_uri="https://claude.ai/api/mcp/auth_callback",
+        code_challenge=None,
+        code_challenge_method=None,
+        scope="linta:read",
+    )
+    access_token = first_store.exchange_code(
+        code=code,
+        client_id="client-id",
+        redirect_uri="https://claude.ai/api/mcp/auth_callback",
+        code_verifier=None,
+    )
+
+    restarted_store = OAuthMemoryStore(token_store_path=token_store)
+
+    assert restarted_store.validate_access_token(access_token)
+
+
 def test_remote_token_env_and_cli_error(monkeypatch) -> None:
     monkeypatch.setenv("LINTA_REMOTE_MCP_TOKEN", "token")
     assert token_from_env() == "token"
